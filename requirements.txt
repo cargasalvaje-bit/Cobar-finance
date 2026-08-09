@@ -1,5 +1,6 @@
 streamlit
+finnhub-python
+websocket-client
+certifi
+pandas
 openai
-pillow
-moviepy
-numpy
