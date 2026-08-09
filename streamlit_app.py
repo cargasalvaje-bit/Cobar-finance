@@ -1,4 +1,3 @@
-```python
 import streamlit as st
 import finnhub
 import websocket
@@ -61,6 +60,7 @@ OPENAI_KEY = st.secrets.get("OPENAI_API_KEY", "")
 # =========================================================
 
 def load_json(filename, default):
+
     if not os.path.exists(filename):
         return default
 
@@ -73,12 +73,11 @@ def load_json(filename, default):
 
 
 def save_json(filename, data):
+
     directory = os.path.dirname(filename)
 
-    os.makedirs(
-        directory if directory else ".",
-        exist_ok=True
-    )
+    if directory:
+        os.makedirs(directory, exist_ok=True)
 
     with open(filename, "w", encoding="utf-8") as f:
         json.dump(
@@ -90,10 +89,12 @@ def save_json(filename, data):
 
 
 def normalize_username(username):
+
     return username.strip().lower()
 
 
 def valid_username(username):
+
     return bool(
         re.fullmatch(
             r"[a-zA-Z0-9_-]{3,24}",
@@ -103,6 +104,7 @@ def valid_username(username):
 
 
 def user_file(username, kind):
+
     safe = hashlib.sha256(
         normalize_username(username).encode()
     ).hexdigest()[:24]
@@ -114,6 +116,7 @@ def user_file(username, kind):
 
 
 def hash_password(password, salt=None):
+
     if salt is None:
         salt = secrets.token_hex(16)
 
@@ -128,6 +131,7 @@ def hash_password(password, salt=None):
 
 
 def check_password(password, salt, stored_hash):
+
     _, calculated = hash_password(
         password,
         salt
@@ -140,6 +144,7 @@ def check_password(password, salt, stored_hash):
 
 
 def create_account(username, password):
+
     username = normalize_username(username)
 
     users = load_json(
@@ -147,15 +152,14 @@ def create_account(username, password):
         {}
     )
 
-    if username in users:
-        return False, "Ese usuario ya existe."
-
     if not valid_username(username):
         return False, (
-            "El usuario debe tener entre 3 y 24 "
-            "caracteres y solo usar letras, números, "
-            "_" o -."
+            'El usuario debe tener entre 3 y 24 '
+            'caracteres y solo usar letras, números, "_" o "-".'
         )
+
+    if username in users:
+        return False, "Ese usuario ya existe."
 
     if len(password) < 6:
         return False, (
@@ -197,6 +201,7 @@ def create_account(username, password):
 
 
 def login(username, password):
+
     username = normalize_username(username)
 
     users = load_json(
@@ -228,7 +233,7 @@ if "username" not in st.session_state:
 
 
 # =========================================================
-# LOGIN
+# LOGIN SCREEN
 # =========================================================
 
 def login_screen():
@@ -237,20 +242,24 @@ def login_screen():
         """
         <style>
 
+        .stApp {
+            background: #000000;
+            color: #E8EEEE;
+        }
+
         .login-box {
             max-width: 500px;
-            margin: 90px auto;
-            padding: 40px;
+            margin: 100px auto;
             background: #030606;
             border: 1px solid #16282B;
-            border-radius: 14px;
+            border-radius: 12px;
+            padding: 40px;
         }
 
         .login-title {
             font-size: 48px;
             letter-spacing: 12px;
             text-align: center;
-            font-weight: 600;
         }
 
         .login-subtitle {
@@ -325,12 +334,14 @@ def login_screen():
                 )
 
                 if success:
+
                     st.success(
                         "Cuenta creada. "
                         "Ahora puedes iniciar sesión."
                     )
 
                 else:
+
                     st.error(message)
 
     else:
@@ -346,6 +357,7 @@ def login_screen():
             ):
 
                 st.session_state.authenticated = True
+
                 st.session_state.username = (
                     normalize_username(username)
                 )
@@ -365,12 +377,13 @@ def login_screen():
 
 
 if not st.session_state.authenticated:
+
     login_screen()
     st.stop()
 
 
 # =========================================================
-# CURRENT USER
+# CURRENT USER DATA
 # =========================================================
 
 CURRENT_USER = st.session_state.username
@@ -392,6 +405,7 @@ CHAT_FILE = user_file(
 
 
 if "portfolio" not in st.session_state:
+
     st.session_state.portfolio = load_json(
         PORTFOLIO_FILE,
         []
@@ -399,6 +413,7 @@ if "portfolio" not in st.session_state:
 
 
 if "notes" not in st.session_state:
+
     st.session_state.notes = load_json(
         NOTES_FILE,
         []
@@ -406,6 +421,7 @@ if "notes" not in st.session_state:
 
 
 if "chat" not in st.session_state:
+
     st.session_state.chat = load_json(
         CHAT_FILE,
         []
@@ -431,7 +447,7 @@ st.markdown(
     }
 
     [data-testid="stSidebar"] * {
-        color: #DDE5E7;
+        color: #DDE5E7 !important;
     }
 
     .block-container {
@@ -442,7 +458,7 @@ st.markdown(
     .cobar-title {
         font-size: 40px;
         letter-spacing: 10px;
-        font-weight: 600;
+        font-weight: 500;
     }
 
     .subtitle {
@@ -454,41 +470,9 @@ st.markdown(
     .panel {
         background: #030606;
         border: 1px solid #16282B;
-        border-radius: 10px;
-        padding: 20px;
+        border-radius: 9px;
+        padding: 18px;
         margin-bottom: 14px;
-    }
-
-    .stock-card {
-        background: #030606;
-        border: 1px solid #16282B;
-        border-radius: 10px;
-        padding: 20px;
-        min-height: 180px;
-    }
-
-    .stock-symbol {
-        color: #7C8A8D;
-        font-size: 11px;
-        letter-spacing: 3px;
-    }
-
-    .stock-price {
-        font-size: 32px;
-        font-weight: 600;
-        margin-top: 8px;
-    }
-
-    .stock-positive {
-        color: #16D98A;
-        font-size: 15px;
-        font-weight: 600;
-    }
-
-    .stock-negative {
-        color: #FF4F5C;
-        font-size: 15px;
-        font-weight: 600;
     }
 
     .small {
@@ -520,33 +504,9 @@ st.markdown(
         color: #FF4F5C;
     }
 
-    .news-card {
-        background: #030606;
-        border: 1px solid #16282B;
-        border-radius: 8px;
-        padding: 16px 18px;
-        margin-bottom: 10px;
-    }
-
-    .news-title {
-        font-size: 15px;
-        font-weight: 600;
-        line-height: 1.4;
-    }
-
-    .news-source {
-        color: #68777A;
-        font-size: 10px;
-        letter-spacing: 2px;
-        margin-top: 8px;
-    }
-
-    .account {
-        background: #050909;
-        border: 1px solid #193235;
-        border-radius: 8px;
-        padding: 12px;
-        margin-bottom: 10px;
+    .news-item {
+        padding: 15px 0;
+        border-bottom: 1px solid #142629;
     }
 
     .note {
@@ -557,27 +517,28 @@ st.markdown(
         margin-bottom: 12px;
     }
 
+    .account {
+        background: #050909;
+        border: 1px solid #193235;
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 10px;
+    }
+
     .ai-box {
         background: #030606;
         border: 1px solid #193235;
         border-radius: 12px;
-        padding: 22px;
+        padding: 20px;
         margin-top: 10px;
     }
 
-    .ai-label {
+    .ai-title {
         color: #16D98A;
-        font-size: 11px;
+        font-size: 12px;
         letter-spacing: 3px;
         font-weight: bold;
-    }
-
-    .status-box {
-        background: #030606;
-        border: 1px solid #16282B;
-        border-radius: 9px;
-        padding: 16px 20px;
-        margin-bottom: 15px;
+        margin-bottom: 10px;
     }
 
     .stTextInput input,
@@ -616,18 +577,20 @@ def create_finnhub(key):
         return None
 
     try:
+
         return finnhub.Client(
             api_key=key
         )
 
     except Exception:
+
         return None
 
 
 fh = create_finnhub(FINNHUB_KEY)
 
 
-@st.cache_data(ttl=10)
+@st.cache_data(ttl=5)
 def get_quotes(symbols):
 
     if fh is None:
@@ -638,11 +601,13 @@ def get_quotes(symbols):
     for symbol in symbols:
 
         try:
+
             result[symbol] = fh.quote(
                 symbol
             )
 
         except Exception:
+
             result[symbol] = {}
 
     return result
@@ -680,10 +645,11 @@ def get_chart(symbol):
         return df.set_index("Time")
 
     except Exception:
+
         return None
 
 
-@st.cache_data(ttl=120)
+@st.cache_data(ttl=60)
 def get_news(symbol):
 
     if fh is None:
@@ -695,26 +661,26 @@ def get_news(symbol):
             "%Y-%m-%d"
         )
 
-        news = fh.company_news(
+        return fh.company_news(
             symbol,
             _from=today,
             to=today
-        )
-
-        return news[:10]
+        )[:10]
 
     except Exception:
+
         return []
 
 
 # =========================================================
-# WEBSOCKET
+# FINNHUB WEBSOCKET
 # =========================================================
 
 @st.cache_resource
 def create_stream(key):
 
     prices = {}
+
     lock = threading.Lock()
 
     state = {
@@ -730,16 +696,12 @@ def create_stream(key):
 
         for symbol in WATCHLIST:
 
-            try:
-                ws.send(
-                    json.dumps({
-                        "type": "subscribe",
-                        "symbol": symbol
-                    })
-                )
-
-            except Exception:
-                pass
+            ws.send(
+                json.dumps({
+                    "type": "subscribe",
+                    "symbol": symbol
+                })
+            )
 
     def on_message(ws, message):
 
@@ -833,6 +795,7 @@ prices, price_lock, stream_state = create_stream(
 def get_live_price(symbol):
 
     with price_lock:
+
         return prices.get(symbol)
 
 
@@ -853,6 +816,7 @@ def create_openai(key):
         )
 
     except Exception:
+
         return None
 
 
@@ -861,13 +825,16 @@ ai = create_openai(
 )
 
 
-def ask_cobar(question, context=""):
+def ask_cobar(
+    question,
+    context=""
+):
 
     if ai is None:
 
         return (
             "COBAR AI está offline. "
-            "Revisa OPENAI_API_KEY en Streamlit Secrets."
+            "Revisa OPENAI_API_KEY."
         )
 
     instructions = """
@@ -1020,7 +987,7 @@ with st.sidebar:
 # MARKET DASHBOARD
 # =========================================================
 
-@st.fragment(run_every=10)
+@st.fragment(run_every=2)
 def market_dashboard():
 
     connected = stream_state["connected"]
@@ -1034,7 +1001,7 @@ def market_dashboard():
 
             st.markdown(
                 """
-                <div class="status-box">
+                <div class="panel">
                     <span class="small">
                         MARKET CONNECTION
                     </span>
@@ -1051,13 +1018,13 @@ def market_dashboard():
 
             st.markdown(
                 """
-                <div class="status-box">
+                <div class="panel">
                     <span class="small">
                         MARKET CONNECTION
                     </span>
                     <br><br>
                     <span class="waiting">
-                        ● CONNECTED / REST FALLBACK
+                        ● CONNECTED / WAITING
                     </span>
                 </div>
                 """,
@@ -1068,13 +1035,13 @@ def market_dashboard():
 
         st.markdown(
             """
-            <div class="status-box">
+            <div class="panel">
                 <span class="small">
                     MARKET CONNECTION
                 </span>
                 <br><br>
                 <span class="waiting">
-                    ● CONNECTED / REST FALLBACK
+                    ● CONNECTED / WAITING FOR TICKS
                 </span>
             </div>
             """,
@@ -1085,23 +1052,18 @@ def market_dashboard():
 
         st.markdown(
             """
-            <div class="status-box">
+            <div class="panel">
                 <span class="small">
                     MARKET CONNECTION
                 </span>
                 <br><br>
-                <span class="waiting">
-                    ● REST MARKET DATA
+                <span class="offline">
+                    ● STREAM OFFLINE
                 </span>
             </div>
             """,
             unsafe_allow_html=True
         )
-
-
-    # -----------------------------------------------------
-    # STOCK CARDS
-    # -----------------------------------------------------
 
     cols = st.columns(4)
 
@@ -1117,7 +1079,9 @@ def market_dashboard():
 
         with col:
 
-            live = get_live_price(symbol)
+            live = get_live_price(
+                symbol
+            )
 
             quote = get_quotes(
                 [symbol]
@@ -1129,7 +1093,6 @@ def market_dashboard():
             if live:
 
                 price = live["price"]
-
                 previous = quote.get("pc")
 
                 if previous:
@@ -1145,9 +1108,9 @@ def market_dashboard():
                     pct = 0
 
                 color_class = (
-                    "stock-positive"
+                    "green"
                     if pct >= 0
-                    else "stock-negative"
+                    else "red"
                 )
 
                 timestamp = datetime.fromtimestamp(
@@ -1158,25 +1121,25 @@ def market_dashboard():
 
                 st.markdown(
                     f"""
-                    <div class="stock-card">
+                    <div class="panel">
 
-                        <div class="stock-symbol">
+                        <div class="small">
                             {symbol}
                         </div>
 
-                        <div class="stock-price">
+                        <h1>
                             ${price:,.2f}
-                        </div>
+                        </h1>
 
-                        <div class="{color_class}">
+                        <span class="{color_class}">
                             {pct:+.2f}%
-                        </div>
+                        </span>
 
-                        <br>
+                        <br><br>
 
-                        <div class="live">
+                        <span class="live">
                             ● LIVE · {timestamp}
-                        </div>
+                        </span>
 
                     </div>
                     """,
@@ -1192,33 +1155,27 @@ def market_dashboard():
                     0
                 )
 
-                color_class = (
-                    "stock-positive"
-                    if pct >= 0
-                    else "stock-negative"
-                )
-
                 st.markdown(
                     f"""
-                    <div class="stock-card">
+                    <div class="panel">
 
-                        <div class="stock-symbol">
+                        <div class="small">
                             {symbol}
                         </div>
 
-                        <div class="stock-price">
+                        <h1>
                             ${price:,.2f}
-                        </div>
+                        </h1>
 
-                        <div class="{color_class}">
+                        <span class="waiting">
                             {pct:+.2f}%
-                        </div>
+                        </span>
 
-                        <br>
+                        <br><br>
 
-                        <div class="waiting">
-                            ● REST DATA
-                        </div>
+                        <span class="small">
+                            REST FALLBACK
+                        </span>
 
                     </div>
                     """,
@@ -1229,34 +1186,25 @@ def market_dashboard():
 
                 st.markdown(
                     f"""
-                    <div class="stock-card">
+                    <div class="panel">
 
-                        <div class="stock-symbol">
+                        <div class="small">
                             {symbol}
                         </div>
 
-                        <div class="stock-price">
+                        <h1>
                             N/D
-                        </div>
-
-                        <br>
-
-                        <div class="offline">
-                            ● NO DATA
-                        </div>
+                        </h1>
 
                     </div>
                     """,
                     unsafe_allow_html=True
                 )
 
-
-    # -----------------------------------------------------
-    # CHART
-    # -----------------------------------------------------
-
     st.markdown(
-        "<br><div class='small'>LIVE MARKET CHART</div>",
+        '<div class="small">'
+        'LIVE MARKET CHART'
+        '</div>',
         unsafe_allow_html=True
     )
 
@@ -1266,7 +1214,9 @@ def market_dashboard():
         key="dashboard_symbol"
     )
 
-    live = get_live_price(selected)
+    live = get_live_price(
+        selected
+    )
 
     if live:
 
@@ -1275,19 +1225,19 @@ def market_dashboard():
             f"${live['price']:,.2f}"
         )
 
-    chart = get_chart(selected)
+        st.caption(
+            "● LIVE STREAM"
+        )
+
+    chart = get_chart(
+        selected
+    )
 
     if chart is not None:
 
         st.line_chart(
             chart["Price"],
             height=400
-        )
-
-    else:
-
-        st.info(
-            "No hay datos históricos disponibles."
         )
 
 
@@ -1315,10 +1265,6 @@ if page == "Command Center":
     market_dashboard()
 
     st.divider()
-
-    # -----------------------------------------------------
-    # NEWS
-    # -----------------------------------------------------
 
     st.subheader("📡 MARKET NEWS")
 
@@ -1348,15 +1294,15 @@ if page == "Command Center":
 
             st.markdown(
                 f"""
-                <div class="news-card">
+                <div class="news-item">
 
-                    <div class="news-title">
-                        {headline}
-                    </div>
+                    <b>{headline}</b>
 
-                    <div class="news-source">
+                    <br><br>
+
+                    <span class="small">
                         {source}
-                    </div>
+                    </span>
 
                 </div>
                 """,
@@ -1369,26 +1315,17 @@ if page == "Command Center":
             "No hay noticias disponibles."
         )
 
-
     st.divider()
-
-    # -----------------------------------------------------
-    # COBAR AI
-    # -----------------------------------------------------
 
     st.markdown(
         """
         <div class="ai-box">
 
-            <div class="ai-label">
+            <div class="ai-title">
                 ◈ COBAR AI
             </div>
 
-            <div style="
-                color:#68777A;
-                font-size:12px;
-                margin-top:7px;
-            ">
+            <div class="small">
                 PERSONAL FINANCIAL INTELLIGENCE
             </div>
 
@@ -1396,7 +1333,6 @@ if page == "Command Center":
         """,
         unsafe_allow_html=True
     )
-
 
     for message in st.session_state.chat:
 
@@ -1408,11 +1344,9 @@ if page == "Command Center":
                 message["content"]
             )
 
-
     prompt = st.chat_input(
-        "Pregunta a COBAR sobre mercados, empresas o tecnología..."
+        "Habla con COBAR..."
     )
-
 
     if prompt:
 
@@ -1423,23 +1357,17 @@ if page == "Command Center":
 
         context = ""
 
-        quotes = get_quotes(
-            WATCHLIST
-        )
-
         for symbol in WATCHLIST:
 
-            quote = quotes.get(
-                symbol,
-                {}
+            live = get_live_price(
+                symbol
             )
 
-            if quote.get("c"):
+            if live:
 
                 context += (
                     f"{symbol}: "
-                    f"${quote['c']:.2f} "
-                    f"({quote.get('dp', 0):+.2f}%)\n"
+                    f"${live['price']:.2f}\n"
                 )
 
         answer = ask_cobar(
@@ -1468,10 +1396,6 @@ elif page == "Market":
 
     st.title("MARKET")
 
-    st.caption(
-        "Market data provided through Finnhub."
-    )
-
     symbol = st.text_input(
         "Ticker",
         placeholder="NVDA"
@@ -1479,7 +1403,9 @@ elif page == "Market":
 
     if symbol:
 
-        live = get_live_price(symbol)
+        live = get_live_price(
+            symbol
+        )
 
         quote = get_quotes(
             [symbol]
@@ -1507,16 +1433,12 @@ elif page == "Market":
             )
 
             st.caption(
-                "● REST DATA"
+                "REST DATA"
             )
 
-        else:
-
-            st.error(
-                "No se encontraron datos para ese ticker."
-            )
-
-        chart = get_chart(symbol)
+        chart = get_chart(
+            symbol
+        )
 
         if chart is not None:
 
@@ -1603,18 +1525,22 @@ No conectes a ningún broker.
 """
 
         st.markdown(
-            """
-            <div class="ai-box">
-                <div class="ai-label">
-                    ◈ COBAR ANALYSIS
-                </div>
-            </div>
-            """,
+            '<div class="ai-box">',
+            unsafe_allow_html=True
+        )
+
+        st.markdown(
+            '<div class="ai-title">◈ COBAR AI ANALYSIS</div>',
             unsafe_allow_html=True
         )
 
         st.write(
             ask_cobar(prompt)
+        )
+
+        st.markdown(
+            '</div>',
+            unsafe_allow_html=True
         )
 
 
@@ -1630,7 +1556,6 @@ elif page == "Portfolio":
         f"Portfolio personal de {CURRENT_USER}. "
         "No está conectado a ningún broker."
     )
-
 
     # -----------------------------------------------------
     # RESET
@@ -1665,13 +1590,7 @@ elif page == "Portfolio":
 
             st.rerun()
 
-
     st.divider()
-
-
-    # -----------------------------------------------------
-    # ADD INVESTMENT
-    # -----------------------------------------------------
 
     with st.form(
         "trade_form"
@@ -1719,23 +1638,18 @@ elif page == "Portfolio":
                 "Inversión registrada."
             )
 
-
     st.divider()
-
-
-    # -----------------------------------------------------
-    # PORTFOLIO DATA
-    # -----------------------------------------------------
 
     total_cost = 0
     total_value = 0
-
 
     for trade in st.session_state.portfolio:
 
         symbol = trade["symbol"]
 
-        live = get_live_price(symbol)
+        live = get_live_price(
+            symbol
+        )
 
         quote = get_quotes(
             [symbol]
@@ -1791,12 +1705,6 @@ elif page == "Portfolio":
                         {symbol}
                     </h3>
 
-                    <span class="small">
-                        POSITION
-                    </span>
-
-                    <br><br>
-
                     Entrada:
                     ${trade["entry"]:,.2f}
 
@@ -1822,40 +1730,6 @@ elif page == "Portfolio":
                 """,
                 unsafe_allow_html=True
             )
-
-        else:
-
-            st.markdown(
-                f"""
-                <div class="note">
-
-                    <h3>{symbol}</h3>
-
-                    <span class="small">
-                        POSITION
-                    </span>
-
-                    <br><br>
-
-                    Entrada:
-                    ${trade["entry"]:,.2f}
-
-                    <br>
-
-                    Cantidad:
-                    {trade["shares"]}
-
-                    <br><br>
-
-                    <span class="waiting">
-                        ● MARKET DATA UNAVAILABLE
-                    </span>
-
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-
 
     if total_cost:
 
@@ -1902,7 +1776,6 @@ elif page == "My Notes":
         f"Notas personales de {CURRENT_USER}."
     )
 
-
     with st.form(
         "note_form"
     ):
@@ -1938,14 +1811,16 @@ elif page == "My Notes":
                 "Nota guardada."
             )
 
-
     st.divider()
 
-
-    for i, note in enumerate(
+    notes_reversed = list(
         reversed(
             st.session_state.notes
         )
+    )
+
+    for i, note in enumerate(
+        notes_reversed
     ):
 
         st.markdown(
@@ -2013,53 +1888,51 @@ elif page == "Intelligence Feed":
         symbol
     )
 
-    if news:
-
-        for item in news:
-
-            headline = item.get(
-                "headline",
-                "Sin título"
-            )
-
-            source = item.get(
-                "source",
-                ""
-            )
-
-            url = item.get(
-                "url"
-            )
-
-            st.markdown(
-                f"""
-                <div class="news-card">
-
-                    <div class="news-title">
-                        {headline}
-                    </div>
-
-                    <div class="news-source">
-                        {source}
-                    </div>
-
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-
-            if url:
-
-                st.link_button(
-                    "ABRIR FUENTE",
-                    url
-                )
-
-    else:
+    if not news:
 
         st.info(
             "No hay noticias disponibles."
         )
+
+    for item in news:
+
+        headline = item.get(
+            "headline",
+            "Sin título"
+        )
+
+        source = item.get(
+            "source",
+            ""
+        )
+
+        url = item.get(
+            "url"
+        )
+
+        st.markdown(
+            f"""
+            <div class="panel">
+
+                <b>{headline}</b>
+
+                <br><br>
+
+                <span class="small">
+                    {source}
+                </span>
+
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        if url:
+
+            st.link_button(
+                "ABRIR FUENTE",
+                url
+            )
 
 
 # =========================================================
@@ -2092,4 +1965,3 @@ elif page == "Media":
             st.error(
                 "Introduce una URL de YouTube válida."
             )
-```
