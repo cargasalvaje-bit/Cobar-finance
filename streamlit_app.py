@@ -1,3 +1,4 @@
+```python
 import streamlit as st
 import finnhub
 import websocket
@@ -51,12 +52,8 @@ os.makedirs(DATA_DIR, exist_ok=True)
 # API KEYS
 # =========================================================
 
-try:
-    FINNHUB_KEY = st.secrets.get("FINNHUB_API_KEY", "")
-    OPENAI_KEY = st.secrets.get("OPENAI_API_KEY", "")
-except Exception:
-    FINNHUB_KEY = ""
-    OPENAI_KEY = ""
+FINNHUB_KEY = st.secrets.get("FINNHUB_API_KEY", "")
+OPENAI_KEY = st.secrets.get("OPENAI_API_KEY", "")
 
 
 # =========================================================
@@ -64,7 +61,6 @@ except Exception:
 # =========================================================
 
 def load_json(filename, default):
-
     if not os.path.exists(filename):
         return default
 
@@ -77,7 +73,6 @@ def load_json(filename, default):
 
 
 def save_json(filename, data):
-
     directory = os.path.dirname(filename)
 
     os.makedirs(
@@ -95,12 +90,10 @@ def save_json(filename, data):
 
 
 def normalize_username(username):
-
     return username.strip().lower()
 
 
 def valid_username(username):
-
     return bool(
         re.fullmatch(
             r"[a-zA-Z0-9_-]{3,24}",
@@ -110,7 +103,6 @@ def valid_username(username):
 
 
 def user_file(username, kind):
-
     safe = hashlib.sha256(
         normalize_username(username).encode()
     ).hexdigest()[:24]
@@ -122,7 +114,6 @@ def user_file(username, kind):
 
 
 def hash_password(password, salt=None):
-
     if salt is None:
         salt = secrets.token_hex(16)
 
@@ -137,7 +128,6 @@ def hash_password(password, salt=None):
 
 
 def check_password(password, salt, stored_hash):
-
     _, calculated = hash_password(
         password,
         salt
@@ -150,7 +140,6 @@ def check_password(password, salt, stored_hash):
 
 
 def create_account(username, password):
-
     username = normalize_username(username)
 
     users = load_json(
@@ -165,7 +154,7 @@ def create_account(username, password):
         return False, (
             "El usuario debe tener entre 3 y 24 "
             "caracteres y solo usar letras, números, "
-            "guion bajo (_) o guion (-)."
+            "_" o -."
         )
 
     if len(password) < 6:
@@ -208,7 +197,6 @@ def create_account(username, password):
 
 
 def login(username, password):
-
     username = normalize_username(username)
 
     users = load_json(
@@ -240,7 +228,7 @@ if "username" not in st.session_state:
 
 
 # =========================================================
-# LOGIN SCREEN
+# LOGIN
 # =========================================================
 
 def login_screen():
@@ -249,32 +237,28 @@ def login_screen():
         """
         <style>
 
-        .stApp {
-            background:#000000;
-            color:#E8EEEE;
-        }
-
         .login-box {
-            max-width:500px;
-            margin:100px auto;
-            background:#030606;
-            border:1px solid #16282B;
-            border-radius:12px;
-            padding:40px;
+            max-width: 500px;
+            margin: 90px auto;
+            padding: 40px;
+            background: #030606;
+            border: 1px solid #16282B;
+            border-radius: 14px;
         }
 
         .login-title {
-            font-size:48px;
-            letter-spacing:12px;
-            text-align:center;
+            font-size: 48px;
+            letter-spacing: 12px;
+            text-align: center;
+            font-weight: 600;
         }
 
         .login-subtitle {
-            text-align:center;
-            color:#16D98A;
-            font-size:11px;
-            letter-spacing:4px;
-            margin-bottom:35px;
+            text-align: center;
+            color: #16D98A;
+            font-size: 11px;
+            letter-spacing: 4px;
+            margin-bottom: 35px;
         }
 
         </style>
@@ -341,14 +325,12 @@ def login_screen():
                 )
 
                 if success:
-
                     st.success(
                         "Cuenta creada. "
                         "Ahora puedes iniciar sesión."
                     )
 
                 else:
-
                     st.error(message)
 
     else:
@@ -364,7 +346,6 @@ def login_screen():
             ):
 
                 st.session_state.authenticated = True
-
                 st.session_state.username = (
                     normalize_username(username)
                 )
@@ -384,13 +365,12 @@ def login_screen():
 
 
 if not st.session_state.authenticated:
-
     login_screen()
     st.stop()
 
 
 # =========================================================
-# CURRENT USER DATA
+# CURRENT USER
 # =========================================================
 
 CURRENT_USER = st.session_state.username
@@ -412,7 +392,6 @@ CHAT_FILE = user_file(
 
 
 if "portfolio" not in st.session_state:
-
     st.session_state.portfolio = load_json(
         PORTFOLIO_FILE,
         []
@@ -420,7 +399,6 @@ if "portfolio" not in st.session_state:
 
 
 if "notes" not in st.session_state:
-
     st.session_state.notes = load_json(
         NOTES_FILE,
         []
@@ -428,7 +406,6 @@ if "notes" not in st.session_state:
 
 
 if "chat" not in st.session_state:
-
     st.session_state.chat = load_json(
         CHAT_FILE,
         []
@@ -444,111 +421,182 @@ st.markdown(
     <style>
 
     .stApp {
-        background:#000000;
-        color:#E8EEEE;
+        background: #000000;
+        color: #E8EEEE;
     }
 
     [data-testid="stSidebar"] {
-        background:#020404;
-        border-right:1px solid #16282B;
+        background: #020404;
+        border-right: 1px solid #16282B;
     }
 
     [data-testid="stSidebar"] * {
-        color:#DDE5E7 !important;
+        color: #DDE5E7;
     }
 
     .block-container {
-        max-width:1550px;
-        padding-top:1.5rem;
+        max-width: 1550px;
+        padding-top: 1.5rem;
     }
 
     .cobar-title {
-        font-size:40px;
-        letter-spacing:10px;
-        font-weight:500;
+        font-size: 40px;
+        letter-spacing: 10px;
+        font-weight: 600;
     }
 
     .subtitle {
-        color:#16D98A;
-        font-size:11px;
-        letter-spacing:4px;
+        color: #16D98A;
+        font-size: 11px;
+        letter-spacing: 4px;
     }
 
     .panel {
-        background:#030606;
-        border:1px solid #16282B;
-        border-radius:9px;
-        padding:18px;
-        margin-bottom:14px;
+        background: #030606;
+        border: 1px solid #16282B;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 14px;
+    }
+
+    .stock-card {
+        background: #030606;
+        border: 1px solid #16282B;
+        border-radius: 10px;
+        padding: 20px;
+        min-height: 180px;
+    }
+
+    .stock-symbol {
+        color: #7C8A8D;
+        font-size: 11px;
+        letter-spacing: 3px;
+    }
+
+    .stock-price {
+        font-size: 32px;
+        font-weight: 600;
+        margin-top: 8px;
+    }
+
+    .stock-positive {
+        color: #16D98A;
+        font-size: 15px;
+        font-weight: 600;
+    }
+
+    .stock-negative {
+        color: #FF4F5C;
+        font-size: 15px;
+        font-weight: 600;
     }
 
     .small {
-        color:#68777A;
-        font-size:10px;
-        letter-spacing:2px;
+        color: #68777A;
+        font-size: 10px;
+        letter-spacing: 2px;
     }
 
     .live {
-        color:#16D98A;
-        font-weight:bold;
+        color: #16D98A;
+        font-weight: bold;
     }
 
     .waiting {
-        color:#FFB020;
-        font-weight:bold;
+        color: #FFB020;
+        font-weight: bold;
     }
 
     .offline {
-        color:#FF4F5C;
-        font-weight:bold;
+        color: #FF4F5C;
+        font-weight: bold;
     }
 
     .green {
-        color:#16D98A;
+        color: #16D98A;
     }
 
     .red {
-        color:#FF4F5C;
+        color: #FF4F5C;
     }
 
-    .news-item {
-        padding:15px 0;
-        border-bottom:1px solid #142629;
+    .news-card {
+        background: #030606;
+        border: 1px solid #16282B;
+        border-radius: 8px;
+        padding: 16px 18px;
+        margin-bottom: 10px;
     }
 
-    .note {
-        background:#030606;
-        border:1px solid #16282B;
-        border-radius:9px;
-        padding:16px;
-        margin-bottom:12px;
+    .news-title {
+        font-size: 15px;
+        font-weight: 600;
+        line-height: 1.4;
+    }
+
+    .news-source {
+        color: #68777A;
+        font-size: 10px;
+        letter-spacing: 2px;
+        margin-top: 8px;
     }
 
     .account {
-        background:#050909;
-        border:1px solid #193235;
-        border-radius:8px;
-        padding:12px;
-        margin-bottom:10px;
+        background: #050909;
+        border: 1px solid #193235;
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 10px;
+    }
+
+    .note {
+        background: #030606;
+        border: 1px solid #16282B;
+        border-radius: 9px;
+        padding: 16px;
+        margin-bottom: 12px;
+    }
+
+    .ai-box {
+        background: #030606;
+        border: 1px solid #193235;
+        border-radius: 12px;
+        padding: 22px;
+        margin-top: 10px;
+    }
+
+    .ai-label {
+        color: #16D98A;
+        font-size: 11px;
+        letter-spacing: 3px;
+        font-weight: bold;
+    }
+
+    .status-box {
+        background: #030606;
+        border: 1px solid #16282B;
+        border-radius: 9px;
+        padding: 16px 20px;
+        margin-bottom: 15px;
     }
 
     .stTextInput input,
     .stTextArea textarea,
     .stNumberInput input {
-        background:#050808 !important;
-        color:#E8EEEE !important;
-        border:1px solid #193235 !important;
+        background: #050808 !important;
+        color: #E8EEEE !important;
+        border: 1px solid #193235 !important;
     }
 
     .stButton button {
-        background:#050909 !important;
-        color:#DCE7E7 !important;
-        border:1px solid #193235 !important;
+        background: #050909 !important;
+        color: #DCE7E7 !important;
+        border: 1px solid #193235 !important;
     }
 
     .stButton button:hover {
-        color:#16D98A !important;
-        border-color:#16D98A !important;
+        color: #16D98A !important;
+        border-color: #16D98A !important;
     }
 
     </style>
@@ -568,20 +616,18 @@ def create_finnhub(key):
         return None
 
     try:
-
         return finnhub.Client(
             api_key=key
         )
 
     except Exception:
-
         return None
 
 
 fh = create_finnhub(FINNHUB_KEY)
 
 
-@st.cache_data(ttl=5)
+@st.cache_data(ttl=10)
 def get_quotes(symbols):
 
     if fh is None:
@@ -592,13 +638,11 @@ def get_quotes(symbols):
     for symbol in symbols:
 
         try:
-
             result[symbol] = fh.quote(
                 symbol
             )
 
         except Exception:
-
             result[symbol] = {}
 
     return result
@@ -636,11 +680,10 @@ def get_chart(symbol):
         return df.set_index("Time")
 
     except Exception:
-
         return None
 
 
-@st.cache_data(ttl=60)
+@st.cache_data(ttl=120)
 def get_news(symbol):
 
     if fh is None:
@@ -652,14 +695,15 @@ def get_news(symbol):
             "%Y-%m-%d"
         )
 
-        return fh.company_news(
+        news = fh.company_news(
             symbol,
             _from=today,
             to=today
-        )[:10]
+        )
+
+        return news[:10]
 
     except Exception:
-
         return []
 
 
@@ -686,12 +730,16 @@ def create_stream(key):
 
         for symbol in WATCHLIST:
 
-            ws.send(
-                json.dumps({
-                    "type": "subscribe",
-                    "symbol": symbol
-                })
-            )
+            try:
+                ws.send(
+                    json.dumps({
+                        "type": "subscribe",
+                        "symbol": symbol
+                    })
+                )
+
+            except Exception:
+                pass
 
     def on_message(ws, message):
 
@@ -720,9 +768,7 @@ def create_stream(key):
                             "timestamp": int(timestamp)
                         }
 
-                        state["last_message"] = (
-                            time.time()
-                        )
+                        state["last_message"] = time.time()
 
         except Exception as e:
 
@@ -807,7 +853,6 @@ def create_openai(key):
         )
 
     except Exception:
-
         return None
 
 
@@ -816,16 +861,13 @@ ai = create_openai(
 )
 
 
-def ask_cobar(
-    question,
-    context=""
-):
+def ask_cobar(question, context=""):
 
     if ai is None:
 
         return (
             "COBAR AI está offline. "
-            "Revisa OPENAI_API_KEY."
+            "Revisa OPENAI_API_KEY en Streamlit Secrets."
         )
 
     instructions = """
@@ -863,9 +905,7 @@ Clearly distinguish current data from hypothetical analysis.
 
     except Exception as e:
 
-        return (
-            f"COBAR AI ERROR: {e}"
-        )
+        return f"COBAR AI ERROR: {e}"
 
 
 # =========================================================
@@ -980,7 +1020,7 @@ with st.sidebar:
 # MARKET DASHBOARD
 # =========================================================
 
-@st.fragment(run_every=2)
+@st.fragment(run_every=10)
 def market_dashboard():
 
     connected = stream_state["connected"]
@@ -994,7 +1034,7 @@ def market_dashboard():
 
             st.markdown(
                 """
-                <div class="panel">
+                <div class="status-box">
                     <span class="small">
                         MARKET CONNECTION
                     </span>
@@ -1011,13 +1051,13 @@ def market_dashboard():
 
             st.markdown(
                 """
-                <div class="panel">
+                <div class="status-box">
                     <span class="small">
                         MARKET CONNECTION
                     </span>
                     <br><br>
                     <span class="waiting">
-                        ● CONNECTED / WAITING
+                        ● CONNECTED / REST FALLBACK
                     </span>
                 </div>
                 """,
@@ -1028,13 +1068,13 @@ def market_dashboard():
 
         st.markdown(
             """
-            <div class="panel">
+            <div class="status-box">
                 <span class="small">
                     MARKET CONNECTION
                 </span>
                 <br><br>
                 <span class="waiting">
-                    ● CONNECTED / WAITING FOR TICKS
+                    ● CONNECTED / REST FALLBACK
                 </span>
             </div>
             """,
@@ -1045,18 +1085,23 @@ def market_dashboard():
 
         st.markdown(
             """
-            <div class="panel">
+            <div class="status-box">
                 <span class="small">
                     MARKET CONNECTION
                 </span>
                 <br><br>
-                <span class="offline">
-                    ● STREAM OFFLINE
+                <span class="waiting">
+                    ● REST MARKET DATA
                 </span>
             </div>
             """,
             unsafe_allow_html=True
         )
+
+
+    # -----------------------------------------------------
+    # STOCK CARDS
+    # -----------------------------------------------------
 
     cols = st.columns(4)
 
@@ -1072,9 +1117,7 @@ def market_dashboard():
 
         with col:
 
-            live = get_live_price(
-                symbol
-            )
+            live = get_live_price(symbol)
 
             quote = get_quotes(
                 [symbol]
@@ -1086,6 +1129,7 @@ def market_dashboard():
             if live:
 
                 price = live["price"]
+
                 previous = quote.get("pc")
 
                 if previous:
@@ -1101,9 +1145,9 @@ def market_dashboard():
                     pct = 0
 
                 color_class = (
-                    "green"
+                    "stock-positive"
                     if pct >= 0
-                    else "red"
+                    else "stock-negative"
                 )
 
                 timestamp = datetime.fromtimestamp(
@@ -1114,25 +1158,25 @@ def market_dashboard():
 
                 st.markdown(
                     f"""
-                    <div class="panel">
+                    <div class="stock-card">
 
-                        <div class="small">
+                        <div class="stock-symbol">
                             {symbol}
                         </div>
 
-                        <h1>
+                        <div class="stock-price">
                             ${price:,.2f}
-                        </h1>
+                        </div>
 
-                        <span class="{color_class}">
+                        <div class="{color_class}">
                             {pct:+.2f}%
-                        </span>
+                        </div>
 
-                        <br><br>
+                        <br>
 
-                        <span class="live">
+                        <div class="live">
                             ● LIVE · {timestamp}
-                        </span>
+                        </div>
 
                     </div>
                     """,
@@ -1142,32 +1186,39 @@ def market_dashboard():
             elif quote.get("c"):
 
                 price = quote["c"]
+
                 pct = quote.get(
                     "dp",
                     0
                 )
 
+                color_class = (
+                    "stock-positive"
+                    if pct >= 0
+                    else "stock-negative"
+                )
+
                 st.markdown(
                     f"""
-                    <div class="panel">
+                    <div class="stock-card">
 
-                        <div class="small">
+                        <div class="stock-symbol">
                             {symbol}
                         </div>
 
-                        <h1>
+                        <div class="stock-price">
                             ${price:,.2f}
-                        </h1>
+                        </div>
 
-                        <span class="waiting">
+                        <div class="{color_class}">
                             {pct:+.2f}%
-                        </span>
+                        </div>
 
-                        <br><br>
+                        <br>
 
-                        <span class="small">
-                            REST FALLBACK
-                        </span>
+                        <div class="waiting">
+                            ● REST DATA
+                        </div>
 
                     </div>
                     """,
@@ -1178,25 +1229,34 @@ def market_dashboard():
 
                 st.markdown(
                     f"""
-                    <div class="panel">
+                    <div class="stock-card">
 
-                        <div class="small">
+                        <div class="stock-symbol">
                             {symbol}
                         </div>
 
-                        <h1>
+                        <div class="stock-price">
                             N/D
-                        </h1>
+                        </div>
+
+                        <br>
+
+                        <div class="offline">
+                            ● NO DATA
+                        </div>
 
                     </div>
                     """,
                     unsafe_allow_html=True
                 )
 
+
+    # -----------------------------------------------------
+    # CHART
+    # -----------------------------------------------------
+
     st.markdown(
-        '<div class="small">'
-        'LIVE MARKET CHART'
-        '</div>',
+        "<br><div class='small'>LIVE MARKET CHART</div>",
         unsafe_allow_html=True
     )
 
@@ -1206,9 +1266,7 @@ def market_dashboard():
         key="dashboard_symbol"
     )
 
-    live = get_live_price(
-        selected
-    )
+    live = get_live_price(selected)
 
     if live:
 
@@ -1217,19 +1275,19 @@ def market_dashboard():
             f"${live['price']:,.2f}"
         )
 
-        st.caption(
-            "● LIVE STREAM"
-        )
-
-    chart = get_chart(
-        selected
-    )
+    chart = get_chart(selected)
 
     if chart is not None:
 
         st.line_chart(
             chart["Price"],
             height=400
+        )
+
+    else:
+
+        st.info(
+            "No hay datos históricos disponibles."
         )
 
 
@@ -1257,6 +1315,10 @@ if page == "Command Center":
     market_dashboard()
 
     st.divider()
+
+    # -----------------------------------------------------
+    # NEWS
+    # -----------------------------------------------------
 
     st.subheader("📡 MARKET NEWS")
 
@@ -1286,15 +1348,15 @@ if page == "Command Center":
 
             st.markdown(
                 f"""
-                <div class="news-item">
+                <div class="news-card">
 
-                    <b>{headline}</b>
+                    <div class="news-title">
+                        {headline}
+                    </div>
 
-                    <br><br>
-
-                    <span class="small">
+                    <div class="news-source">
                         {source}
-                    </span>
+                    </div>
 
                 </div>
                 """,
@@ -1307,9 +1369,34 @@ if page == "Command Center":
             "No hay noticias disponibles."
         )
 
+
     st.divider()
 
-    st.subheader("◈ COBAR AI")
+    # -----------------------------------------------------
+    # COBAR AI
+    # -----------------------------------------------------
+
+    st.markdown(
+        """
+        <div class="ai-box">
+
+            <div class="ai-label">
+                ◈ COBAR AI
+            </div>
+
+            <div style="
+                color:#68777A;
+                font-size:12px;
+                margin-top:7px;
+            ">
+                PERSONAL FINANCIAL INTELLIGENCE
+            </div>
+
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
 
     for message in st.session_state.chat:
 
@@ -1321,9 +1408,11 @@ if page == "Command Center":
                 message["content"]
             )
 
+
     prompt = st.chat_input(
-        "Habla con Cobar..."
+        "Pregunta a COBAR sobre mercados, empresas o tecnología..."
     )
+
 
     if prompt:
 
@@ -1334,17 +1423,23 @@ if page == "Command Center":
 
         context = ""
 
+        quotes = get_quotes(
+            WATCHLIST
+        )
+
         for symbol in WATCHLIST:
 
-            live = get_live_price(
-                symbol
+            quote = quotes.get(
+                symbol,
+                {}
             )
 
-            if live:
+            if quote.get("c"):
 
                 context += (
                     f"{symbol}: "
-                    f"${live['price']:.2f}\n"
+                    f"${quote['c']:.2f} "
+                    f"({quote.get('dp', 0):+.2f}%)\n"
                 )
 
         answer = ask_cobar(
@@ -1373,6 +1468,10 @@ elif page == "Market":
 
     st.title("MARKET")
 
+    st.caption(
+        "Market data provided through Finnhub."
+    )
+
     symbol = st.text_input(
         "Ticker",
         placeholder="NVDA"
@@ -1380,9 +1479,7 @@ elif page == "Market":
 
     if symbol:
 
-        live = get_live_price(
-            symbol
-        )
+        live = get_live_price(symbol)
 
         quote = get_quotes(
             [symbol]
@@ -1410,12 +1507,16 @@ elif page == "Market":
             )
 
             st.caption(
-                "REST DATA"
+                "● REST DATA"
             )
 
-        chart = get_chart(
-            symbol
-        )
+        else:
+
+            st.error(
+                "No se encontraron datos para ese ticker."
+            )
+
+        chart = get_chart(symbol)
 
         if chart is not None:
 
@@ -1501,6 +1602,17 @@ No ejecutes operaciones.
 No conectes a ningún broker.
 """
 
+        st.markdown(
+            """
+            <div class="ai-box">
+                <div class="ai-label">
+                    ◈ COBAR ANALYSIS
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
         st.write(
             ask_cobar(prompt)
         )
@@ -1518,6 +1630,7 @@ elif page == "Portfolio":
         f"Portfolio personal de {CURRENT_USER}. "
         "No está conectado a ningún broker."
     )
+
 
     # -----------------------------------------------------
     # RESET
@@ -1552,7 +1665,13 @@ elif page == "Portfolio":
 
             st.rerun()
 
+
     st.divider()
+
+
+    # -----------------------------------------------------
+    # ADD INVESTMENT
+    # -----------------------------------------------------
 
     with st.form(
         "trade_form"
@@ -1600,18 +1719,23 @@ elif page == "Portfolio":
                 "Inversión registrada."
             )
 
+
     st.divider()
+
+
+    # -----------------------------------------------------
+    # PORTFOLIO DATA
+    # -----------------------------------------------------
 
     total_cost = 0
     total_value = 0
+
 
     for trade in st.session_state.portfolio:
 
         symbol = trade["symbol"]
 
-        live = get_live_price(
-            symbol
-        )
+        live = get_live_price(symbol)
 
         quote = get_quotes(
             [symbol]
@@ -1667,6 +1791,12 @@ elif page == "Portfolio":
                         {symbol}
                     </h3>
 
+                    <span class="small">
+                        POSITION
+                    </span>
+
+                    <br><br>
+
                     Entrada:
                     ${trade["entry"]:,.2f}
 
@@ -1692,6 +1822,40 @@ elif page == "Portfolio":
                 """,
                 unsafe_allow_html=True
             )
+
+        else:
+
+            st.markdown(
+                f"""
+                <div class="note">
+
+                    <h3>{symbol}</h3>
+
+                    <span class="small">
+                        POSITION
+                    </span>
+
+                    <br><br>
+
+                    Entrada:
+                    ${trade["entry"]:,.2f}
+
+                    <br>
+
+                    Cantidad:
+                    {trade["shares"]}
+
+                    <br><br>
+
+                    <span class="waiting">
+                        ● MARKET DATA UNAVAILABLE
+                    </span>
+
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
 
     if total_cost:
 
@@ -1738,6 +1902,7 @@ elif page == "My Notes":
         f"Notas personales de {CURRENT_USER}."
     )
 
+
     with st.form(
         "note_form"
     ):
@@ -1773,7 +1938,9 @@ elif page == "My Notes":
                 "Nota guardada."
             )
 
+
     st.divider()
+
 
     for i, note in enumerate(
         reversed(
@@ -1866,15 +2033,15 @@ elif page == "Intelligence Feed":
 
             st.markdown(
                 f"""
-                <div class="panel">
+                <div class="news-card">
 
-                    <b>{headline}</b>
+                    <div class="news-title">
+                        {headline}
+                    </div>
 
-                    <br><br>
-
-                    <span class="small">
+                    <div class="news-source">
                         {source}
-                    </span>
+                    </div>
 
                 </div>
                 """,
@@ -1925,3 +2092,4 @@ elif page == "Media":
             st.error(
                 "Introduce una URL de YouTube válida."
             )
+```
