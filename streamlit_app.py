@@ -1,3 +1,4 @@
+```python
 import streamlit as st
 import finnhub
 import websocket
@@ -29,6 +30,10 @@ st.set_page_config(
 )
 
 
+# =========================================================
+# CONFIG
+# =========================================================
+
 WATCHLIST = [
     "NVDA",
     "TSLA",
@@ -40,19 +45,484 @@ WATCHLIST = [
     "GOOGL"
 ]
 
-
 DATA_DIR = "cobar_data"
 USERS_FILE = os.path.join(DATA_DIR, "users.json")
 
 os.makedirs(DATA_DIR, exist_ok=True)
 
-
-# =========================================================
-# API KEYS
-# =========================================================
-
 FINNHUB_KEY = st.secrets.get("FINNHUB_API_KEY", "")
 OPENAI_KEY = st.secrets.get("OPENAI_API_KEY", "")
+
+
+# =========================================================
+# PREMIUM TERMINAL DESIGN
+# =========================================================
+
+st.markdown(
+    """
+    <style>
+
+    /* =========================
+       GLOBAL
+       ========================= */
+
+    .stApp {
+        background:
+            radial-gradient(
+                circle at 50% -20%,
+                #071310 0%,
+                #020505 35%,
+                #000000 70%
+            );
+        color: #E8EEEE;
+    }
+
+    .main .block-container {
+        max-width: 1500px;
+        padding-top: 2rem;
+        padding-bottom: 4rem;
+    }
+
+    /* =========================
+       SIDEBAR
+       ========================= */
+
+    [data-testid="stSidebar"] {
+        background: #020404;
+        border-right: 1px solid #10211E;
+    }
+
+    [data-testid="stSidebar"] * {
+        color: #DDE7E4 !important;
+    }
+
+    [data-testid="stSidebar"] .stRadio label:hover {
+        color: #16D98A !important;
+    }
+
+    /* =========================
+       TEXT
+       ========================= */
+
+    .cobar-logo {
+        font-size: 42px;
+        font-weight: 600;
+        letter-spacing: 11px;
+        color: #E8EEEE;
+        margin-bottom: 2px;
+    }
+
+    .cobar-subtitle {
+        color: #16D98A;
+        font-size: 9px;
+        letter-spacing: 3px;
+        font-weight: 600;
+        margin-bottom: 25px;
+    }
+
+    .section-title {
+        font-size: 11px;
+        letter-spacing: 3px;
+        color: #71817D;
+        font-weight: 600;
+        margin-top: 20px;
+        margin-bottom: 12px;
+    }
+
+    .terminal-title {
+        font-size: 34px;
+        letter-spacing: 8px;
+        font-weight: 500;
+        color: #F0F5F3;
+        margin-bottom: 3px;
+    }
+
+    .terminal-subtitle {
+        color: #16D98A;
+        font-size: 10px;
+        letter-spacing: 4px;
+        font-weight: 600;
+        margin-bottom: 28px;
+    }
+
+    .muted {
+        color: #64736F;
+        font-size: 11px;
+    }
+
+    /* =========================
+       PANELS
+       ========================= */
+
+    .terminal-panel {
+        background:
+            linear-gradient(
+                145deg,
+                #07100E,
+                #030706
+            );
+        border: 1px solid #112A24;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow:
+            0 8px 30px rgba(0,0,0,0.35);
+        margin-bottom: 14px;
+    }
+
+    .metric-panel {
+        background:
+            linear-gradient(
+                145deg,
+                #07110E,
+                #030706
+            );
+        border: 1px solid #123128;
+        border-radius: 10px;
+        padding: 18px 20px;
+        min-height: 145px;
+        box-shadow:
+            inset 0 1px 0 rgba(255,255,255,0.02),
+            0 8px 25px rgba(0,0,0,0.25);
+    }
+
+    .metric-symbol {
+        color: #6E817B;
+        font-size: 10px;
+        letter-spacing: 3px;
+        font-weight: 700;
+    }
+
+    .metric-price {
+        color: #F0F5F3;
+        font-size: 29px;
+        font-weight: 500;
+        margin-top: 9px;
+        margin-bottom: 5px;
+    }
+
+    .metric-positive {
+        color: #16D98A;
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .metric-negative {
+        color: #16D98A;
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .metric-status {
+        color: #60716C;
+        font-size: 9px;
+        letter-spacing: 2px;
+        margin-top: 12px;
+    }
+
+    /* =========================
+       CONNECTION
+       ========================= */
+
+    .connection-live {
+        background: #04110D;
+        border: 1px solid #123D2E;
+        border-radius: 8px;
+        padding: 13px 16px;
+        margin-bottom: 18px;
+    }
+
+    .connection-wait {
+        background: #080B08;
+        border: 1px solid #263127;
+        border-radius: 8px;
+        padding: 13px 16px;
+        margin-bottom: 18px;
+    }
+
+    .connection-offline {
+        background: #090505;
+        border: 1px solid #291111;
+        border-radius: 8px;
+        padding: 13px 16px;
+        margin-bottom: 18px;
+    }
+
+    .live-dot {
+        color: #16D98A;
+        font-weight: 700;
+    }
+
+    .wait-dot {
+        color: #A4B09F;
+        font-weight: 700;
+    }
+
+    .offline-dot {
+        color: #16D98A;
+        font-weight: 700;
+    }
+
+    /* =========================
+       NEWS
+       ========================= */
+
+    .news-card {
+        background: #030706;
+        border: 1px solid #10231F;
+        border-radius: 8px;
+        padding: 17px 19px;
+        margin-bottom: 9px;
+        transition: 0.2s;
+    }
+
+    .news-card:hover {
+        border-color: #16D98A;
+        background: #05100C;
+    }
+
+    .news-headline {
+        color: #E3ECE9;
+        font-size: 14px;
+        line-height: 1.45;
+        font-weight: 500;
+    }
+
+    .news-source {
+        color: #52635E;
+        font-size: 9px;
+        letter-spacing: 2px;
+        margin-top: 9px;
+    }
+
+    /* =========================
+       ACCOUNT
+       ========================= */
+
+    .account-box {
+        background: #050908;
+        border: 1px solid #122B25;
+        border-radius: 8px;
+        padding: 12px 14px;
+        margin: 12px 0 16px;
+    }
+
+    .account-label {
+        color: #53635F;
+        font-size: 8px;
+        letter-spacing: 2px;
+    }
+
+    .account-name {
+        color: #E5ECEA;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    /* =========================
+       AI CHAT
+       ========================= */
+
+    .ai-header {
+        background:
+            linear-gradient(
+                90deg,
+                #06100D,
+                #030706
+            );
+        border: 1px solid #123128;
+        border-radius: 10px;
+        padding: 18px 20px;
+        margin-bottom: 15px;
+    }
+
+    .ai-name {
+        color: #EAF1EF;
+        font-size: 17px;
+        letter-spacing: 3px;
+        font-weight: 600;
+    }
+
+    .ai-status {
+        color: #16D98A;
+        font-size: 9px;
+        letter-spacing: 2px;
+        margin-top: 4px;
+    }
+
+    /* =========================
+       PORTFOLIO
+       ========================= */
+
+    .portfolio-card {
+        background: #030706;
+        border: 1px solid #112A24;
+        border-radius: 9px;
+        padding: 19px;
+        margin-bottom: 10px;
+    }
+
+    .portfolio-symbol {
+        color: #F0F5F3;
+        font-size: 18px;
+        font-weight: 600;
+        letter-spacing: 2px;
+    }
+
+    .portfolio-data {
+        color: #687873;
+        font-size: 10px;
+        letter-spacing: 1px;
+    }
+
+    .portfolio-value {
+        color: #E6EEEB;
+        font-size: 17px;
+        font-weight: 500;
+    }
+
+    /* =========================
+       NOTES
+       ========================= */
+
+    .note-card {
+        background: #030706;
+        border: 1px solid #112A24;
+        border-radius: 9px;
+        padding: 18px;
+        margin-bottom: 10px;
+    }
+
+    .note-title {
+        color: #E5ECEA;
+        font-size: 16px;
+        font-weight: 600;
+    }
+
+    .note-date {
+        color: #53635E;
+        font-size: 9px;
+        letter-spacing: 2px;
+    }
+
+    .note-content {
+        color: #B9C4C0;
+        font-size: 13px;
+        line-height: 1.6;
+        margin-top: 12px;
+    }
+
+    /* =========================
+       STREAMLIT CONTROLS
+       ========================= */
+
+    .stButton button {
+        background: #050908 !important;
+        color: #DDE7E4 !important;
+        border: 1px solid #17332C !important;
+        border-radius: 7px !important;
+        min-height: 40px;
+        font-weight: 600;
+        letter-spacing: 1px;
+    }
+
+    .stButton button:hover {
+        color: #16D98A !important;
+        border-color: #16D98A !important;
+        background: #06100C !important;
+    }
+
+    .stTextInput input,
+    .stTextArea textarea,
+    .stNumberInput input {
+        background: #030706 !important;
+        color: #E8EEEE !important;
+        border: 1px solid #17332C !important;
+        border-radius: 7px !important;
+    }
+
+    .stSelectbox div[data-baseweb="select"] > div {
+        background: #030706 !important;
+        border-color: #17332C !important;
+    }
+
+    .stDateInput input {
+        background: #030706 !important;
+        color: #E8EEEE !important;
+        border-color: #17332C !important;
+    }
+
+    div[data-testid="stMetric"] {
+        background: #030706;
+        border: 1px solid #112A24;
+        border-radius: 8px;
+        padding: 15px;
+    }
+
+    div[data-testid="stMetricLabel"] {
+        color: #65756F !important;
+    }
+
+    div[data-testid="stMetricValue"] {
+        color: #E8EEEE !important;
+    }
+
+    hr {
+        border-color: #10231F !important;
+    }
+
+    /* =========================
+       CHAT
+       ========================= */
+
+    [data-testid="stChatMessage"] {
+        background: #030706;
+        border: 1px solid #10231F;
+        border-radius: 9px;
+        margin-bottom: 8px;
+    }
+
+    /* =========================
+       LOGIN
+       ========================= */
+
+    .login-container {
+        max-width: 480px;
+        margin: 100px auto;
+    }
+
+    .login-card {
+        background:
+            linear-gradient(
+                145deg,
+                #07100E,
+                #020504
+            );
+        border: 1px solid #16342C;
+        border-radius: 12px;
+        padding: 42px;
+        box-shadow:
+            0 20px 70px rgba(0,0,0,0.55);
+    }
+
+    .login-logo {
+        text-align: center;
+        font-size: 48px;
+        letter-spacing: 13px;
+        color: #EAF1EF;
+    }
+
+    .login-sub {
+        text-align: center;
+        color: #16D98A;
+        font-size: 9px;
+        letter-spacing: 4px;
+        margin-bottom: 35px;
+    }
+
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 
 # =========================================================
@@ -60,24 +530,23 @@ OPENAI_KEY = st.secrets.get("OPENAI_API_KEY", "")
 # =========================================================
 
 def load_json(filename, default):
-
     if not os.path.exists(filename):
         return default
 
     try:
         with open(filename, "r", encoding="utf-8") as f:
             return json.load(f)
-
     except Exception:
         return default
 
 
 def save_json(filename, data):
-
     directory = os.path.dirname(filename)
 
-    if directory:
-        os.makedirs(directory, exist_ok=True)
+    os.makedirs(
+        directory if directory else ".",
+        exist_ok=True
+    )
 
     with open(filename, "w", encoding="utf-8") as f:
         json.dump(
@@ -89,12 +558,10 @@ def save_json(filename, data):
 
 
 def normalize_username(username):
-
     return username.strip().lower()
 
 
 def valid_username(username):
-
     return bool(
         re.fullmatch(
             r"[a-zA-Z0-9_-]{3,24}",
@@ -104,7 +571,6 @@ def valid_username(username):
 
 
 def user_file(username, kind):
-
     safe = hashlib.sha256(
         normalize_username(username).encode()
     ).hexdigest()[:24]
@@ -116,7 +582,6 @@ def user_file(username, kind):
 
 
 def hash_password(password, salt=None):
-
     if salt is None:
         salt = secrets.token_hex(16)
 
@@ -131,7 +596,6 @@ def hash_password(password, salt=None):
 
 
 def check_password(password, salt, stored_hash):
-
     _, calculated = hash_password(
         password,
         salt
@@ -144,7 +608,6 @@ def check_password(password, salt, stored_hash):
 
 
 def create_account(username, password):
-
     username = normalize_username(username)
 
     users = load_json(
@@ -152,14 +615,15 @@ def create_account(username, password):
         {}
     )
 
-    if not valid_username(username):
-        return False, (
-            'El usuario debe tener entre 3 y 24 '
-            'caracteres y solo usar letras, números, "_" o "-".'
-        )
-
     if username in users:
         return False, "Ese usuario ya existe."
+
+    if not valid_username(username):
+        return False, (
+            "El usuario debe tener entre 3 y 24 "
+            "caracteres y solo usar letras, números, "
+            "_ o -."
+        )
 
     if len(password) < 6:
         return False, (
@@ -201,7 +665,6 @@ def create_account(username, password):
 
 
 def login(username, password):
-
     username = normalize_username(username)
 
     users = load_json(
@@ -240,55 +703,15 @@ def login_screen():
 
     st.markdown(
         """
-        <style>
-
-        .stApp {
-            background: #000000;
-            color: #E8EEEE;
-        }
-
-        .login-box {
-            max-width: 500px;
-            margin: 100px auto;
-            background: #030606;
-            border: 1px solid #16282B;
-            border-radius: 12px;
-            padding: 40px;
-        }
-
-        .login-title {
-            font-size: 48px;
-            letter-spacing: 12px;
-            text-align: center;
-        }
-
-        .login-subtitle {
-            text-align: center;
-            color: #16D98A;
-            font-size: 11px;
-            letter-spacing: 4px;
-            margin-bottom: 35px;
-        }
-
-        </style>
+        <div class="login-container">
+            <div class="login-card">
+                <div class="login-logo">COBAR</div>
+                <div class="login-sub">
+                    PERSONAL FINANCIAL INTELLIGENCE
+                </div>
+            </div>
+        </div>
         """,
-        unsafe_allow_html=True
-    )
-
-    st.markdown(
-        '<div class="login-box">',
-        unsafe_allow_html=True
-    )
-
-    st.markdown(
-        '<div class="login-title">COBAR</div>',
-        unsafe_allow_html=True
-    )
-
-    st.markdown(
-        '<div class="login-subtitle">'
-        'PERSONAL FINANCIAL INTELLIGENCE'
-        '</div>',
         unsafe_allow_html=True
     )
 
@@ -334,14 +757,10 @@ def login_screen():
                 )
 
                 if success:
-
                     st.success(
-                        "Cuenta creada. "
-                        "Ahora puedes iniciar sesión."
+                        "Cuenta creada. Ahora puedes iniciar sesión."
                     )
-
                 else:
-
                     st.error(message)
 
     else:
@@ -357,7 +776,6 @@ def login_screen():
             ):
 
                 st.session_state.authenticated = True
-
                 st.session_state.username = (
                     normalize_username(username)
                 )
@@ -370,14 +788,8 @@ def login_screen():
                     "Usuario o contraseña incorrectos."
                 )
 
-    st.markdown(
-        "</div>",
-        unsafe_allow_html=True
-    )
-
 
 if not st.session_state.authenticated:
-
     login_screen()
     st.stop()
 
@@ -405,7 +817,6 @@ CHAT_FILE = user_file(
 
 
 if "portfolio" not in st.session_state:
-
     st.session_state.portfolio = load_json(
         PORTFOLIO_FILE,
         []
@@ -413,7 +824,6 @@ if "portfolio" not in st.session_state:
 
 
 if "notes" not in st.session_state:
-
     st.session_state.notes = load_json(
         NOTES_FILE,
         []
@@ -421,149 +831,10 @@ if "notes" not in st.session_state:
 
 
 if "chat" not in st.session_state:
-
     st.session_state.chat = load_json(
         CHAT_FILE,
         []
     )
-
-
-# =========================================================
-# DESIGN
-# =========================================================
-
-st.markdown(
-    """
-    <style>
-
-    .stApp {
-        background: #000000;
-        color: #E8EEEE;
-    }
-
-    [data-testid="stSidebar"] {
-        background: #020404;
-        border-right: 1px solid #16282B;
-    }
-
-    [data-testid="stSidebar"] * {
-        color: #DDE5E7 !important;
-    }
-
-    .block-container {
-        max-width: 1550px;
-        padding-top: 1.5rem;
-    }
-
-    .cobar-title {
-        font-size: 40px;
-        letter-spacing: 10px;
-        font-weight: 500;
-    }
-
-    .subtitle {
-        color: #16D98A;
-        font-size: 11px;
-        letter-spacing: 4px;
-    }
-
-    .panel {
-        background: #030606;
-        border: 1px solid #16282B;
-        border-radius: 9px;
-        padding: 18px;
-        margin-bottom: 14px;
-    }
-
-    .small {
-        color: #68777A;
-        font-size: 10px;
-        letter-spacing: 2px;
-    }
-
-    .live {
-        color: #16D98A;
-        font-weight: bold;
-    }
-
-    .waiting {
-        color: #FFB020;
-        font-weight: bold;
-    }
-
-    .offline {
-        color: #FF4F5C;
-        font-weight: bold;
-    }
-
-    .green {
-        color: #16D98A;
-    }
-
-    .red {
-        color: #FF4F5C;
-    }
-
-    .news-item {
-        padding: 15px 0;
-        border-bottom: 1px solid #142629;
-    }
-
-    .note {
-        background: #030606;
-        border: 1px solid #16282B;
-        border-radius: 9px;
-        padding: 16px;
-        margin-bottom: 12px;
-    }
-
-    .account {
-        background: #050909;
-        border: 1px solid #193235;
-        border-radius: 8px;
-        padding: 12px;
-        margin-bottom: 10px;
-    }
-
-    .ai-box {
-        background: #030606;
-        border: 1px solid #193235;
-        border-radius: 12px;
-        padding: 20px;
-        margin-top: 10px;
-    }
-
-    .ai-title {
-        color: #16D98A;
-        font-size: 12px;
-        letter-spacing: 3px;
-        font-weight: bold;
-        margin-bottom: 10px;
-    }
-
-    .stTextInput input,
-    .stTextArea textarea,
-    .stNumberInput input {
-        background: #050808 !important;
-        color: #E8EEEE !important;
-        border: 1px solid #193235 !important;
-    }
-
-    .stButton button {
-        background: #050909 !important;
-        color: #DCE7E7 !important;
-        border: 1px solid #193235 !important;
-    }
-
-    .stButton button:hover {
-        color: #16D98A !important;
-        border-color: #16D98A !important;
-    }
-
-    </style>
-    """,
-    unsafe_allow_html=True
-)
 
 
 # =========================================================
@@ -577,13 +848,10 @@ def create_finnhub(key):
         return None
 
     try:
-
         return finnhub.Client(
             api_key=key
         )
-
     except Exception:
-
         return None
 
 
@@ -601,13 +869,10 @@ def get_quotes(symbols):
     for symbol in symbols:
 
         try:
-
             result[symbol] = fh.quote(
                 symbol
             )
-
         except Exception:
-
             result[symbol] = {}
 
     return result
@@ -645,7 +910,6 @@ def get_chart(symbol):
         return df.set_index("Time")
 
     except Exception:
-
         return None
 
 
@@ -668,19 +932,17 @@ def get_news(symbol):
         )[:10]
 
     except Exception:
-
         return []
 
 
 # =========================================================
-# FINNHUB WEBSOCKET
+# WEBSOCKET
 # =========================================================
 
 @st.cache_resource
 def create_stream(key):
 
     prices = {}
-
     lock = threading.Lock()
 
     state = {
@@ -795,7 +1057,6 @@ prices, price_lock, stream_state = create_stream(
 def get_live_price(symbol):
 
     with price_lock:
-
         return prices.get(symbol)
 
 
@@ -810,13 +1071,10 @@ def create_openai(key):
         return None
 
     try:
-
         return OpenAI(
             api_key=key
         )
-
     except Exception:
-
         return None
 
 
@@ -882,12 +1140,12 @@ Clearly distinguish current data from hypothetical analysis.
 with st.sidebar:
 
     st.markdown(
-        '<div class="cobar-title">COBAR</div>',
+        '<div class="cobar-logo">COBAR</div>',
         unsafe_allow_html=True
     )
 
     st.markdown(
-        '<div class="subtitle">'
+        '<div class="cobar-subtitle">'
         'PERSONAL FINANCIAL INTELLIGENCE'
         '</div>',
         unsafe_allow_html=True
@@ -897,12 +1155,13 @@ with st.sidebar:
 
     st.markdown(
         f"""
-        <div class="account">
-            <span class="small">
+        <div class="account-box">
+            <div class="account-label">
                 LOGGED IN AS
-            </span>
-            <br>
-            <b>{CURRENT_USER}</b>
+            </div>
+            <div class="account-name">
+                {CURRENT_USER}
+            </div>
         </div>
         """,
         unsafe_allow_html=True
@@ -926,16 +1185,14 @@ with st.sidebar:
     if FINNHUB_KEY:
 
         st.markdown(
-            '<span class="live">'
-            '● FINNHUB API'
-            '</span>',
+            '<span class="live-dot">● FINNHUB API</span>',
             unsafe_allow_html=True
         )
 
     else:
 
         st.markdown(
-            '<span class="offline">'
+            '<span class="offline-dot">'
             '● FINNHUB KEY MISSING'
             '</span>',
             unsafe_allow_html=True
@@ -944,16 +1201,14 @@ with st.sidebar:
     if OPENAI_KEY:
 
         st.markdown(
-            '<span class="live">'
-            '● COBAR AI'
-            '</span>',
+            '<span class="live-dot">● COBAR AI</span>',
             unsafe_allow_html=True
         )
 
     else:
 
         st.markdown(
-            '<span class="offline">'
+            '<span class="offline-dot">'
             '● OPENAI KEY MISSING'
             '</span>',
             unsafe_allow_html=True
@@ -974,7 +1229,6 @@ with st.sidebar:
             "notes",
             "chat"
         ]:
-
             st.session_state.pop(
                 key,
                 None
@@ -984,11 +1238,10 @@ with st.sidebar:
 
 
 # =========================================================
-# MARKET DASHBOARD
+# CONNECTION STATUS
 # =========================================================
 
-@st.fragment(run_every=2)
-def market_dashboard():
+def render_connection():
 
     connected = stream_state["connected"]
     last_message = stream_state["last_message"]
@@ -1001,13 +1254,13 @@ def market_dashboard():
 
             st.markdown(
                 """
-                <div class="panel">
-                    <span class="small">
-                        MARKET CONNECTION
+                <div class="connection-live">
+                    <span class="live-dot">
+                        ● LIVE MARKET STREAM
                     </span>
-                    <br><br>
-                    <span class="live">
-                        ● LIVE STREAM
+                    &nbsp;&nbsp;
+                    <span class="muted">
+                        Finnhub WebSocket
                     </span>
                 </div>
                 """,
@@ -1018,13 +1271,13 @@ def market_dashboard():
 
             st.markdown(
                 """
-                <div class="panel">
-                    <span class="small">
-                        MARKET CONNECTION
-                    </span>
-                    <br><br>
-                    <span class="waiting">
+                <div class="connection-wait">
+                    <span class="wait-dot">
                         ● CONNECTED / WAITING
+                    </span>
+                    &nbsp;&nbsp;
+                    <span class="muted">
+                        Waiting for market ticks
                     </span>
                 </div>
                 """,
@@ -1035,13 +1288,13 @@ def market_dashboard():
 
         st.markdown(
             """
-            <div class="panel">
-                <span class="small">
-                    MARKET CONNECTION
+            <div class="connection-wait">
+                <span class="wait-dot">
+                    ● CONNECTED / WAITING
                 </span>
-                <br><br>
-                <span class="waiting">
-                    ● CONNECTED / WAITING FOR TICKS
+                &nbsp;&nbsp;
+                <span class="muted">
+                    Waiting for market ticks
                 </span>
             </div>
             """,
@@ -1052,18 +1305,140 @@ def market_dashboard():
 
         st.markdown(
             """
-            <div class="panel">
-                <span class="small">
-                    MARKET CONNECTION
-                </span>
-                <br><br>
-                <span class="offline">
+            <div class="connection-offline">
+                <span class="offline-dot">
                     ● STREAM OFFLINE
+                </span>
+                &nbsp;&nbsp;
+                <span class="muted">
+                    REST market data may still be available
                 </span>
             </div>
             """,
             unsafe_allow_html=True
         )
+
+
+# =========================================================
+# STOCK CARD
+# =========================================================
+
+def render_stock_card(symbol):
+
+    live = get_live_price(symbol)
+
+    quote = get_quotes(
+        [symbol]
+    ).get(
+        symbol,
+        {}
+    )
+
+    if live:
+
+        price = live["price"]
+
+        previous = quote.get("pc")
+
+        if previous:
+            pct = (
+                (price - previous)
+                / previous
+                * 100
+            )
+        else:
+            pct = 0
+
+        timestamp = datetime.fromtimestamp(
+            live["timestamp"] / 1000
+        ).strftime("%H:%M:%S")
+
+        st.markdown(
+            f"""
+            <div class="metric-panel">
+
+                <div class="metric-symbol">
+                    {symbol}
+                </div>
+
+                <div class="metric-price">
+                    ${price:,.2f}
+                </div>
+
+                <div class="metric-positive">
+                    {pct:+.2f}%
+                </div>
+
+                <div class="metric-status">
+                    ● LIVE · {timestamp}
+                </div>
+
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    elif quote.get("c"):
+
+        price = quote["c"]
+        pct = quote.get("dp", 0)
+
+        st.markdown(
+            f"""
+            <div class="metric-panel">
+
+                <div class="metric-symbol">
+                    {symbol}
+                </div>
+
+                <div class="metric-price">
+                    ${price:,.2f}
+                </div>
+
+                <div class="metric-positive">
+                    {pct:+.2f}%
+                </div>
+
+                <div class="metric-status">
+                    REST MARKET DATA
+                </div>
+
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    else:
+
+        st.markdown(
+            f"""
+            <div class="metric-panel">
+
+                <div class="metric-symbol">
+                    {symbol}
+                </div>
+
+                <div class="metric-price">
+                    N/D
+                </div>
+
+                <div class="metric-status">
+                    DATA UNAVAILABLE
+                </div>
+
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+
+# =========================================================
+# MARKET DASHBOARD
+# =========================================================
+
+def market_dashboard():
+
+    render_connection()
 
     cols = st.columns(4)
 
@@ -1078,131 +1453,10 @@ def market_dashboard():
     ):
 
         with col:
-
-            live = get_live_price(
-                symbol
-            )
-
-            quote = get_quotes(
-                [symbol]
-            ).get(
-                symbol,
-                {}
-            )
-
-            if live:
-
-                price = live["price"]
-                previous = quote.get("pc")
-
-                if previous:
-
-                    pct = (
-                        (price - previous)
-                        / previous
-                        * 100
-                    )
-
-                else:
-
-                    pct = 0
-
-                color_class = (
-                    "green"
-                    if pct >= 0
-                    else "red"
-                )
-
-                timestamp = datetime.fromtimestamp(
-                    live["timestamp"] / 1000
-                ).strftime(
-                    "%H:%M:%S"
-                )
-
-                st.markdown(
-                    f"""
-                    <div class="panel">
-
-                        <div class="small">
-                            {symbol}
-                        </div>
-
-                        <h1>
-                            ${price:,.2f}
-                        </h1>
-
-                        <span class="{color_class}">
-                            {pct:+.2f}%
-                        </span>
-
-                        <br><br>
-
-                        <span class="live">
-                            ● LIVE · {timestamp}
-                        </span>
-
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
-
-            elif quote.get("c"):
-
-                price = quote["c"]
-
-                pct = quote.get(
-                    "dp",
-                    0
-                )
-
-                st.markdown(
-                    f"""
-                    <div class="panel">
-
-                        <div class="small">
-                            {symbol}
-                        </div>
-
-                        <h1>
-                            ${price:,.2f}
-                        </h1>
-
-                        <span class="waiting">
-                            {pct:+.2f}%
-                        </span>
-
-                        <br><br>
-
-                        <span class="small">
-                            REST FALLBACK
-                        </span>
-
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
-
-            else:
-
-                st.markdown(
-                    f"""
-                    <div class="panel">
-
-                        <div class="small">
-                            {symbol}
-                        </div>
-
-                        <h1>
-                            N/D
-                        </h1>
-
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
+            render_stock_card(symbol)
 
     st.markdown(
-        '<div class="small">'
+        '<div class="section-title">'
         'LIVE MARKET CHART'
         '</div>',
         unsafe_allow_html=True
@@ -1214,8 +1468,13 @@ def market_dashboard():
         key="dashboard_symbol"
     )
 
-    live = get_live_price(
-        selected
+    live = get_live_price(selected)
+
+    quote = get_quotes(
+        [selected]
+    ).get(
+        selected,
+        {}
     )
 
     if live:
@@ -1225,19 +1484,26 @@ def market_dashboard():
             f"${live['price']:,.2f}"
         )
 
-        st.caption(
-            "● LIVE STREAM"
+    elif quote.get("c"):
+
+        st.metric(
+            "PRICE",
+            f"${quote['c']:,.2f}"
         )
 
-    chart = get_chart(
-        selected
-    )
+    chart = get_chart(selected)
 
     if chart is not None:
 
         st.line_chart(
             chart["Price"],
             height=400
+        )
+
+    else:
+
+        st.info(
+            "No hay datos históricos disponibles."
         )
 
 
@@ -1248,35 +1514,35 @@ def market_dashboard():
 if page == "Command Center":
 
     st.markdown(
-        """
-        <div class="cobar-title">
-            COBAR
-        </div>
-
-        <div class="subtitle">
-            PERSONAL FINANCIAL INTELLIGENCE
-        </div>
-        """,
+        '<div class="terminal-title">COBAR</div>',
         unsafe_allow_html=True
     )
 
-    st.write("")
+    st.markdown(
+        '<div class="terminal-subtitle">'
+        'PERSONAL FINANCIAL INTELLIGENCE'
+        '</div>',
+        unsafe_allow_html=True
+    )
 
     market_dashboard()
 
     st.divider()
 
-    st.subheader("📡 MARKET NEWS")
+    st.markdown(
+        '<div class="section-title">'
+        'MARKET NEWS'
+        '</div>',
+        unsafe_allow_html=True
+    )
 
     news_symbol = st.selectbox(
-        "Company",
+        "COMPANY",
         WATCHLIST,
         key="command_news"
     )
 
-    news = get_news(
-        news_symbol
-    )
+    news = get_news(news_symbol)
 
     if news:
 
@@ -1294,15 +1560,15 @@ if page == "Command Center":
 
             st.markdown(
                 f"""
-                <div class="news-item">
+                <div class="news-card">
 
-                    <b>{headline}</b>
+                    <div class="news-headline">
+                        {headline}
+                    </div>
 
-                    <br><br>
-
-                    <span class="small">
+                    <div class="news-source">
                         {source}
-                    </span>
+                    </div>
 
                 </div>
                 """,
@@ -1319,16 +1585,13 @@ if page == "Command Center":
 
     st.markdown(
         """
-        <div class="ai-box">
-
-            <div class="ai-title">
+        <div class="ai-header">
+            <div class="ai-name">
                 ◈ COBAR AI
             </div>
-
-            <div class="small">
-                PERSONAL FINANCIAL INTELLIGENCE
+            <div class="ai-status">
+                PERSONAL INTELLIGENCE SYSTEM
             </div>
-
         </div>
         """,
         unsafe_allow_html=True
@@ -1359,8 +1622,13 @@ if page == "Command Center":
 
         for symbol in WATCHLIST:
 
-            live = get_live_price(
-                symbol
+            live = get_live_price(symbol)
+
+            quote = get_quotes(
+                [symbol]
+            ).get(
+                symbol,
+                {}
             )
 
             if live:
@@ -1368,6 +1636,13 @@ if page == "Command Center":
                 context += (
                     f"{symbol}: "
                     f"${live['price']:.2f}\n"
+                )
+
+            elif quote.get("c"):
+
+                context += (
+                    f"{symbol}: "
+                    f"${quote['c']:.2f}\n"
                 )
 
         answer = ask_cobar(
@@ -1394,53 +1669,37 @@ if page == "Command Center":
 
 elif page == "Market":
 
-    st.title("MARKET")
+    st.markdown(
+        '<div class="terminal-title">MARKET</div>',
+        unsafe_allow_html=True
+    )
+
+    st.markdown(
+        '<div class="terminal-subtitle">'
+        'REAL-TIME MARKET INTELLIGENCE'
+        '</div>',
+        unsafe_allow_html=True
+    )
 
     symbol = st.text_input(
-        "Ticker",
+        "TICKER",
         placeholder="NVDA"
     ).upper().strip()
 
     if symbol:
 
-        live = get_live_price(
-            symbol
-        )
+        render_stock_card(symbol)
 
-        quote = get_quotes(
-            [symbol]
-        ).get(
-            symbol,
-            {}
-        )
-
-        if live:
-
-            st.metric(
-                "LIVE PRICE",
-                f"${live['price']:,.2f}"
-            )
-
-            st.caption(
-                "● LIVE STREAM"
-            )
-
-        elif quote.get("c"):
-
-            st.metric(
-                "PRICE",
-                f"${quote['c']:,.2f}"
-            )
-
-            st.caption(
-                "REST DATA"
-            )
-
-        chart = get_chart(
-            symbol
-        )
+        chart = get_chart(symbol)
 
         if chart is not None:
+
+            st.markdown(
+                '<div class="section-title">'
+                'PRICE HISTORY'
+                '</div>',
+                unsafe_allow_html=True
+            )
 
             st.line_chart(
                 chart["Price"],
@@ -1454,22 +1713,32 @@ elif page == "Market":
 
 elif page == "Investment AI":
 
-    st.title("INVESTMENT AI")
+    st.markdown(
+        '<div class="terminal-title">INVESTMENT AI</div>',
+        unsafe_allow_html=True
+    )
 
-    st.caption(
+    st.markdown(
+        '<div class="terminal-subtitle">'
+        'SCENARIO ANALYSIS'
+        '</div>',
+        unsafe_allow_html=True
+    )
+
+    st.info(
         "Herramienta educativa para analizar escenarios. "
         "No ejecuta operaciones."
     )
 
     capital = st.number_input(
-        "Capital hipotético",
+        "CAPITAL HIPOTÉTICO",
         min_value=0.0,
         value=1000.0,
         step=100.0
     )
 
     horizon = st.selectbox(
-        "Horizonte",
+        "HORIZONTE",
         [
             "Corto plazo",
             "Mediano plazo",
@@ -1478,7 +1747,7 @@ elif page == "Investment AI":
     )
 
     objective = st.selectbox(
-        "Objetivo",
+        "OBJETIVO",
         [
             "Aprender",
             "Crecimiento",
@@ -1488,11 +1757,11 @@ elif page == "Investment AI":
     )
 
     details = st.text_area(
-        "¿Qué quieres analizar?"
+        "¿QUÉ QUIERES ANALIZAR?"
     )
 
     if st.button(
-        "ANALIZAR",
+        "ANALIZAR ESCENARIO",
         use_container_width=True
     ):
 
@@ -1524,23 +1793,8 @@ No ejecutes operaciones.
 No conectes a ningún broker.
 """
 
-        st.markdown(
-            '<div class="ai-box">',
-            unsafe_allow_html=True
-        )
-
-        st.markdown(
-            '<div class="ai-title">◈ COBAR AI ANALYSIS</div>',
-            unsafe_allow_html=True
-        )
-
         st.write(
             ask_cobar(prompt)
-        )
-
-        st.markdown(
-            '</div>',
-            unsafe_allow_html=True
         )
 
 
@@ -1550,25 +1804,30 @@ No conectes a ningún broker.
 
 elif page == "Portfolio":
 
-    st.title("PORTFOLIO")
+    st.markdown(
+        '<div class="terminal-title">PORTFOLIO</div>',
+        unsafe_allow_html=True
+    )
+
+    st.markdown(
+        '<div class="terminal-subtitle">'
+        'PERSONAL HOLDINGS'
+        '</div>',
+        unsafe_allow_html=True
+    )
 
     st.caption(
         f"Portfolio personal de {CURRENT_USER}. "
         "No está conectado a ningún broker."
     )
 
-    # -----------------------------------------------------
-    # RESET
-    # -----------------------------------------------------
-
     with st.expander(
-        "⚠️ Portfolio settings"
+        "⚠ PORTFOLIO SETTINGS"
     ):
 
         st.warning(
-            "Resetear el portfolio eliminará "
-            "todas las inversiones registradas "
-            "de esta cuenta."
+            "Resetear el portfolio eliminará todas "
+            "las inversiones registradas de esta cuenta."
         )
 
         if st.button(
@@ -1597,23 +1856,23 @@ elif page == "Portfolio":
     ):
 
         symbol = st.text_input(
-            "Ticker"
+            "TICKER"
         ).upper().strip()
 
         shares = st.number_input(
-            "Cantidad",
+            "CANTIDAD",
             min_value=0.0001,
             value=1.0
         )
 
         entry = st.number_input(
-            "Precio de entrada",
+            "PRECIO DE ENTRADA",
             min_value=0.01,
             value=100.0
         )
 
         date = st.date_input(
-            "Fecha"
+            "FECHA"
         )
 
         submitted = st.form_submit_button(
@@ -1647,9 +1906,7 @@ elif page == "Portfolio":
 
         symbol = trade["symbol"]
 
-        live = get_live_price(
-            symbol
-        )
+        live = get_live_price(symbol)
 
         quote = get_quotes(
             [symbol]
@@ -1691,40 +1948,86 @@ elif page == "Portfolio":
                 else 0
             )
 
-            color_class = (
-                "green"
-                if pnl >= 0
-                else "red"
+            st.markdown(
+                f"""
+                <div class="portfolio-card">
+
+                    <div class="portfolio-symbol">
+                        {symbol}
+                    </div>
+
+                    <br>
+
+                    <div class="portfolio-data">
+                        ENTRY
+                    </div>
+
+                    <div class="portfolio-value">
+                        ${trade["entry"]:,.2f}
+                    </div>
+
+                    <br>
+
+                    <div class="portfolio-data">
+                        CURRENT
+                    </div>
+
+                    <div class="portfolio-value">
+                        ${current:,.2f}
+                    </div>
+
+                    <br>
+
+                    <div class="portfolio-data">
+                        SHARES
+                    </div>
+
+                    <div class="portfolio-value">
+                        {trade["shares"]}
+                    </div>
+
+                    <br>
+
+                    <div class="portfolio-data">
+                        P/L
+                    </div>
+
+                    <div class="metric-positive">
+                        ${pnl:+,.2f}
+                        &nbsp;&nbsp;
+                        ({pct:+.2f}%)
+                    </div>
+
+                </div>
+                """,
+                unsafe_allow_html=True
             )
+
+        else:
 
             st.markdown(
                 f"""
-                <div class="note">
+                <div class="portfolio-card">
 
-                    <h3>
+                    <div class="portfolio-symbol">
                         {symbol}
-                    </h3>
-
-                    Entrada:
-                    ${trade["entry"]:,.2f}
+                    </div>
 
                     <br>
 
-                    Actual:
-                    ${current:,.2f}
+                    <div class="portfolio-data">
+                        ENTRY
+                    </div>
+
+                    <div class="portfolio-value">
+                        ${trade["entry"]:,.2f}
+                    </div>
 
                     <br>
 
-                    Cantidad:
-                    {trade["shares"]}
-
-                    <br><br>
-
-                    <span class="{color_class}">
-                        P/L:
-                        ${pnl:+,.2f}
-                        ({pct:+.2f}%)
-                    </span>
+                    <div class="portfolio-data">
+                        CURRENT PRICE UNAVAILABLE
+                    </div>
 
                 </div>
                 """,
@@ -1743,12 +2046,12 @@ elif page == "Portfolio":
         c1, c2, c3 = st.columns(3)
 
         c1.metric(
-            "REGISTRADO",
+            "REGISTERED",
             f"${total_cost:,.2f}"
         )
 
         c2.metric(
-            "VALOR ACTUAL",
+            "CURRENT VALUE",
             f"${total_value:,.2f}"
         )
 
@@ -1770,7 +2073,17 @@ elif page == "Portfolio":
 
 elif page == "My Notes":
 
-    st.title("MY NOTES")
+    st.markdown(
+        '<div class="terminal-title">MY NOTES</div>',
+        unsafe_allow_html=True
+    )
+
+    st.markdown(
+        '<div class="terminal-subtitle">'
+        'PRIVATE INTELLIGENCE'
+        '</div>',
+        unsafe_allow_html=True
+    )
 
     st.caption(
         f"Notas personales de {CURRENT_USER}."
@@ -1781,11 +2094,11 @@ elif page == "My Notes":
     ):
 
         title = st.text_input(
-            "Título"
+            "TÍTULO"
         )
 
         content = st.text_area(
-            "Nota"
+            "NOTA"
         )
 
         save = st.form_submit_button(
@@ -1813,31 +2126,27 @@ elif page == "My Notes":
 
     st.divider()
 
-    notes_reversed = list(
+    for i, note in enumerate(
         reversed(
             st.session_state.notes
         )
-    )
-
-    for i, note in enumerate(
-        notes_reversed
     ):
 
         st.markdown(
             f"""
-            <div class="note">
+            <div class="note-card">
 
-                <h3>
+                <div class="note-title">
                     {note["title"]}
-                </h3>
+                </div>
 
-                <span class="small">
+                <div class="note-date">
                     {note["date"]}
-                </span>
+                </div>
 
-                <br><br>
-
-                {note["content"]}
+                <div class="note-content">
+                    {note["content"]}
+                </div>
 
             </div>
             """,
@@ -1845,7 +2154,7 @@ elif page == "My Notes":
         )
 
         if st.button(
-            "Eliminar",
+            "ELIMINAR",
             key=f"delete_note_{i}"
         ):
 
@@ -1875,64 +2184,74 @@ elif page == "My Notes":
 
 elif page == "Intelligence Feed":
 
-    st.title(
-        "INTELLIGENCE FEED"
+    st.markdown(
+        '<div class="terminal-title">'
+        'INTELLIGENCE FEED'
+        '</div>',
+        unsafe_allow_html=True
+    )
+
+    st.markdown(
+        '<div class="terminal-subtitle">'
+        'COMPANY NEWS'
+        '</div>',
+        unsafe_allow_html=True
     )
 
     symbol = st.selectbox(
-        "Empresa",
+        "COMPANY",
         WATCHLIST
     )
 
-    news = get_news(
-        symbol
-    )
+    news = get_news(symbol)
 
-    if not news:
+    if news:
+
+        for item in news:
+
+            headline = item.get(
+                "headline",
+                "Sin título"
+            )
+
+            source = item.get(
+                "source",
+                ""
+            )
+
+            url = item.get(
+                "url"
+            )
+
+            st.markdown(
+                f"""
+                <div class="news-card">
+
+                    <div class="news-headline">
+                        {headline}
+                    </div>
+
+                    <div class="news-source">
+                        {source}
+                    </div>
+
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+            if url:
+
+                st.link_button(
+                    "ABRIR FUENTE",
+                    url
+                )
+
+    else:
 
         st.info(
             "No hay noticias disponibles."
         )
-
-    for item in news:
-
-        headline = item.get(
-            "headline",
-            "Sin título"
-        )
-
-        source = item.get(
-            "source",
-            ""
-        )
-
-        url = item.get(
-            "url"
-        )
-
-        st.markdown(
-            f"""
-            <div class="panel">
-
-                <b>{headline}</b>
-
-                <br><br>
-
-                <span class="small">
-                    {source}
-                </span>
-
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-        if url:
-
-            st.link_button(
-                "ABRIR FUENTE",
-                url
-            )
 
 
 # =========================================================
@@ -1941,14 +2260,24 @@ elif page == "Intelligence Feed":
 
 elif page == "Media":
 
-    st.title("MEDIA")
+    st.markdown(
+        '<div class="terminal-title">MEDIA</div>',
+        unsafe_allow_html=True
+    )
+
+    st.markdown(
+        '<div class="terminal-subtitle">'
+        'MARKET MEDIA'
+        '</div>',
+        unsafe_allow_html=True
+    )
 
     st.caption(
         "Entrevistas y videos que quieras analizar."
     )
 
     url = st.text_input(
-        "URL de YouTube"
+        "YOUTUBE URL"
     )
 
     if url:
@@ -1965,3 +2294,4 @@ elif page == "Media":
             st.error(
                 "Introduce una URL de YouTube válida."
             )
+```
