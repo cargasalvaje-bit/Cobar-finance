@@ -15,6 +15,7 @@ import re
 from datetime import datetime
 from openai import OpenAI
 
+
 # =========================================================
 # COBAR
 # PERSONAL FINANCIAL INTELLIGENCE
@@ -27,6 +28,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+
 WATCHLIST = [
     "NVDA",
     "TSLA",
@@ -38,13 +40,24 @@ WATCHLIST = [
     "GOOGL"
 ]
 
+
 DATA_DIR = "cobar_data"
 USERS_FILE = os.path.join(DATA_DIR, "users.json")
 
 os.makedirs(DATA_DIR, exist_ok=True)
 
-FINNHUB_KEY = st.secrets.get("FINNHUB_API_KEY", "")
-OPENAI_KEY = st.secrets.get("OPENAI_API_KEY", "")
+
+# =========================================================
+# API KEYS
+# =========================================================
+
+try:
+    FINNHUB_KEY = st.secrets.get("FINNHUB_API_KEY", "")
+    OPENAI_KEY = st.secrets.get("OPENAI_API_KEY", "")
+except Exception:
+    FINNHUB_KEY = ""
+    OPENAI_KEY = ""
+
 
 # =========================================================
 # SECURITY / USERS
@@ -65,10 +78,10 @@ def load_json(filename, default):
 
 def save_json(filename, data):
 
+    directory = os.path.dirname(filename)
+
     os.makedirs(
-        os.path.dirname(filename)
-        if os.path.dirname(filename)
-        else ".",
+        directory if directory else ".",
         exist_ok=True
     )
 
@@ -152,7 +165,7 @@ def create_account(username, password):
         return False, (
             "El usuario debe tener entre 3 y 24 "
             "caracteres y solo usar letras, números, "
-            "_" o -."
+            "guion bajo (_) o guion (-)."
         )
 
     if len(password) < 6:
@@ -176,7 +189,6 @@ def create_account(username, password):
         users
     )
 
-    # Create empty personal files
     save_json(
         user_file(username, "portfolio"),
         []
@@ -352,6 +364,7 @@ def login_screen():
             ):
 
                 st.session_state.authenticated = True
+
                 st.session_state.username = (
                     normalize_username(username)
                 )
@@ -397,6 +410,7 @@ CHAT_FILE = user_file(
     "chat"
 )
 
+
 if "portfolio" not in st.session_state:
 
     st.session_state.portfolio = load_json(
@@ -404,12 +418,14 @@ if "portfolio" not in st.session_state:
         []
     )
 
+
 if "notes" not in st.session_state:
 
     st.session_state.notes = load_json(
         NOTES_FILE,
         []
     )
+
 
 if "chat" not in st.session_state:
 
@@ -552,11 +568,13 @@ def create_finnhub(key):
         return None
 
     try:
+
         return finnhub.Client(
             api_key=key
         )
 
     except Exception:
+
         return None
 
 
@@ -574,6 +592,7 @@ def get_quotes(symbols):
     for symbol in symbols:
 
         try:
+
             result[symbol] = fh.quote(
                 symbol
             )
@@ -698,9 +717,7 @@ def create_stream(key):
 
                         prices[symbol] = {
                             "price": float(price),
-                            "timestamp": int(
-                                timestamp
-                            )
+                            "timestamp": int(timestamp)
                         }
 
                         state["last_message"] = (
@@ -784,11 +801,13 @@ def create_openai(key):
         return None
 
     try:
+
         return OpenAI(
             api_key=key
         )
 
     except Exception:
+
         return None
 
 
@@ -973,7 +992,8 @@ def market_dashboard():
 
         if age < 15:
 
-            st.html("""
+            st.markdown(
+                """
                 <div class="panel">
                     <span class="small">
                         MARKET CONNECTION
@@ -983,11 +1003,14 @@ def market_dashboard():
                         ● LIVE STREAM
                     </span>
                 </div>
-            """)
+                """,
+                unsafe_allow_html=True
+            )
 
         else:
 
-            st.html("""
+            st.markdown(
+                """
                 <div class="panel">
                     <span class="small">
                         MARKET CONNECTION
@@ -997,11 +1020,14 @@ def market_dashboard():
                         ● CONNECTED / WAITING
                     </span>
                 </div>
-            """)
+                """,
+                unsafe_allow_html=True
+            )
 
     elif connected:
 
-        st.html("""
+        st.markdown(
+            """
             <div class="panel">
                 <span class="small">
                     MARKET CONNECTION
@@ -1011,11 +1037,14 @@ def market_dashboard():
                     ● CONNECTED / WAITING FOR TICKS
                 </span>
             </div>
-        """)
+            """,
+            unsafe_allow_html=True
+        )
 
     else:
 
-        st.html("""
+        st.markdown(
+            """
             <div class="panel">
                 <span class="small">
                     MARKET CONNECTION
@@ -1025,7 +1054,9 @@ def market_dashboard():
                     ● STREAM OFFLINE
                 </span>
             </div>
-        """)
+            """,
+            unsafe_allow_html=True
+        )
 
     cols = st.columns(4)
 
@@ -1081,7 +1112,7 @@ def market_dashboard():
                     "%H:%M:%S"
                 )
 
-                st.html(
+                st.markdown(
                     f"""
                     <div class="panel">
 
@@ -1104,7 +1135,8 @@ def market_dashboard():
                         </span>
 
                     </div>
-                    """
+                    """,
+                    unsafe_allow_html=True
                 )
 
             elif quote.get("c"):
@@ -1115,7 +1147,7 @@ def market_dashboard():
                     0
                 )
 
-                st.html(
+                st.markdown(
                     f"""
                     <div class="panel">
 
@@ -1138,12 +1170,13 @@ def market_dashboard():
                         </span>
 
                     </div>
-                    """
+                    """,
+                    unsafe_allow_html=True
                 )
 
             else:
 
-                st.html(
+                st.markdown(
                     f"""
                     <div class="panel">
 
@@ -1156,7 +1189,8 @@ def market_dashboard():
                         </h1>
 
                     </div>
-                    """
+                    """,
+                    unsafe_allow_html=True
                 )
 
     st.markdown(
@@ -1205,7 +1239,8 @@ def market_dashboard():
 
 if page == "Command Center":
 
-    st.html("""
+    st.markdown(
+        """
         <div class="cobar-title">
             COBAR
         </div>
@@ -1213,7 +1248,9 @@ if page == "Command Center":
         <div class="subtitle">
             PERSONAL FINANCIAL INTELLIGENCE
         </div>
-    """)
+        """,
+        unsafe_allow_html=True
+    )
 
     st.write("")
 
@@ -1247,7 +1284,7 @@ if page == "Command Center":
                 ""
             )
 
-            st.html(
+            st.markdown(
                 f"""
                 <div class="news-item">
 
@@ -1260,7 +1297,8 @@ if page == "Command Center":
                     </span>
 
                 </div>
-                """
+                """,
+                unsafe_allow_html=True
             )
 
     else:
@@ -1621,7 +1659,7 @@ elif page == "Portfolio":
                 else "red"
             )
 
-            st.html(
+            st.markdown(
                 f"""
                 <div class="note">
 
@@ -1651,7 +1689,8 @@ elif page == "Portfolio":
                     </span>
 
                 </div>
-                """
+                """,
+                unsafe_allow_html=True
             )
 
     if total_cost:
@@ -1742,7 +1781,7 @@ elif page == "My Notes":
         )
     ):
 
-        st.html(
+        st.markdown(
             f"""
             <div class="note">
 
@@ -1759,7 +1798,8 @@ elif page == "My Notes":
                 {note["content"]}
 
             </div>
-            """
+            """,
+            unsafe_allow_html=True
         )
 
         if st.button(
@@ -1806,44 +1846,53 @@ elif page == "Intelligence Feed":
         symbol
     )
 
-    for item in news:
+    if news:
 
-        headline = item.get(
-            "headline",
-            "Sin título"
-        )
+        for item in news:
 
-        source = item.get(
-            "source",
-            ""
-        )
-
-        url = item.get(
-            "url"
-        )
-
-        st.html(
-            f"""
-            <div class="panel">
-
-                <b>{headline}</b>
-
-                <br><br>
-
-                <span class="small">
-                    {source}
-                </span>
-
-            </div>
-            """
-        )
-
-        if url:
-
-            st.link_button(
-                "ABRIR FUENTE",
-                url
+            headline = item.get(
+                "headline",
+                "Sin título"
             )
+
+            source = item.get(
+                "source",
+                ""
+            )
+
+            url = item.get(
+                "url"
+            )
+
+            st.markdown(
+                f"""
+                <div class="panel">
+
+                    <b>{headline}</b>
+
+                    <br><br>
+
+                    <span class="small">
+                        {source}
+                    </span>
+
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+            if url:
+
+                st.link_button(
+                    "ABRIR FUENTE",
+                    url
+                )
+
+    else:
+
+        st.info(
+            "No hay noticias disponibles."
+        )
 
 
 # =========================================================
