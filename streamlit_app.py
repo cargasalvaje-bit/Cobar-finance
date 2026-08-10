@@ -1,4 +1,3 @@
-python
 import streamlit as st
 import finnhub
 import websocket
@@ -30,10 +29,6 @@ st.set_page_config(
 )
 
 
-# =========================================================
-# CONFIG
-# =========================================================
-
 WATCHLIST = [
     "NVDA",
     "TSLA",
@@ -45,478 +40,367 @@ WATCHLIST = [
     "GOOGL"
 ]
 
+
 DATA_DIR = "cobar_data"
 USERS_FILE = os.path.join(DATA_DIR, "users.json")
 
 os.makedirs(DATA_DIR, exist_ok=True)
+
+
+# =========================================================
+# API KEYS
+# =========================================================
 
 FINNHUB_KEY = st.secrets.get("FINNHUB_API_KEY", "")
 OPENAI_KEY = st.secrets.get("OPENAI_API_KEY", "")
 
 
 # =========================================================
-# PREMIUM TERMINAL DESIGN
+# GLOBAL DESIGN
 # =========================================================
 
 st.markdown(
     """
     <style>
 
-    /* =========================
+    /* ==============================
        GLOBAL
-       ========================= */
+       ============================== */
 
     .stApp {
         background:
             radial-gradient(
-                circle at 50% -20%,
-                #071310 0%,
-                #020505 35%,
-                #000000 70%
+                circle at top right,
+                #061311 0%,
+                #000000 35%,
+                #000000 100%
             );
         color: #E8EEEE;
     }
 
-    .main .block-container {
+    .block-container {
         max-width: 1500px;
         padding-top: 2rem;
-        padding-bottom: 4rem;
+        padding-bottom: 3rem;
     }
-
-    /* =========================
-       SIDEBAR
-       ========================= */
 
     [data-testid="stSidebar"] {
         background: #020404;
-        border-right: 1px solid #10211E;
+        border-right: 1px solid #142522;
     }
 
     [data-testid="stSidebar"] * {
-        color: #DDE7E4 !important;
+        color: #DDE8E6 !important;
     }
 
-    [data-testid="stSidebar"] .stRadio label:hover {
-        color: #16D98A !important;
-    }
 
-    /* =========================
-       TEXT
-       ========================= */
+    /* ==============================
+       COBAR HEADER
+       ============================== */
 
     .cobar-logo {
-        font-size: 42px;
+        font-size: 44px;
         font-weight: 600;
-        letter-spacing: 11px;
-        color: #E8EEEE;
+        letter-spacing: 12px;
+        color: #EAF5F2;
         margin-bottom: 2px;
     }
 
     .cobar-subtitle {
+        font-size: 10px;
+        letter-spacing: 4px;
         color: #16D98A;
-        font-size: 9px;
-        letter-spacing: 3px;
-        font-weight: 600;
         margin-bottom: 25px;
     }
 
-    .section-title {
-        font-size: 11px;
-        letter-spacing: 3px;
-        color: #71817D;
-        font-weight: 600;
-        margin-top: 20px;
-        margin-bottom: 12px;
-    }
 
-    .terminal-title {
-        font-size: 34px;
-        letter-spacing: 8px;
-        font-weight: 500;
-        color: #F0F5F3;
-        margin-bottom: 3px;
-    }
-
-    .terminal-subtitle {
-        color: #16D98A;
-        font-size: 10px;
-        letter-spacing: 4px;
-        font-weight: 600;
-        margin-bottom: 28px;
-    }
-
-    .muted {
-        color: #64736F;
-        font-size: 11px;
-    }
-
-    /* =========================
+    /* ==============================
        PANELS
-       ========================= */
+       ============================== */
 
-    .terminal-panel {
+    .cobar-panel {
         background:
             linear-gradient(
                 145deg,
-                #07100E,
-                #030706
+                #07100E 0%,
+                #030706 100%
             );
-        border: 1px solid #112A24;
-        border-radius: 10px;
-        padding: 20px;
+        border: 1px solid #17342E;
+        border-radius: 14px;
+        padding: 22px;
+        margin-bottom: 16px;
         box-shadow:
-            0 8px 30px rgba(0,0,0,0.35);
-        margin-bottom: 14px;
+            0 8px 30px rgba(0, 0, 0, 0.35);
     }
 
-    .metric-panel {
+    .market-card {
         background:
             linear-gradient(
                 145deg,
-                #07110E,
-                #030706
+                #081310 0%,
+                #030706 100%
             );
-        border: 1px solid #123128;
-        border-radius: 10px;
-        padding: 18px 20px;
-        min-height: 145px;
+        border: 1px solid #173D33;
+        border-radius: 15px;
+        padding: 22px;
+        min-height: 190px;
         box-shadow:
-            inset 0 1px 0 rgba(255,255,255,0.02),
-            0 8px 25px rgba(0,0,0,0.25);
+            inset 0 1px 0 rgba(255,255,255,0.025),
+            0 10px 30px rgba(0,0,0,0.35);
     }
 
-    .metric-symbol {
-        color: #6E817B;
-        font-size: 10px;
+    .market-card:hover {
+        border-color: #16D98A;
+    }
+
+    .ticker {
+        color: #78908B;
+        font-size: 11px;
+        font-weight: 600;
         letter-spacing: 3px;
-        font-weight: 700;
     }
 
-    .metric-price {
-        color: #F0F5F3;
-        font-size: 29px;
-        font-weight: 500;
-        margin-top: 9px;
+    .stock-price {
+        color: #F2F8F6;
+        font-size: 34px;
+        font-weight: 600;
+        margin-top: 12px;
         margin-bottom: 5px;
     }
 
-    .metric-positive {
+    .positive {
         color: #16D98A;
-        font-size: 13px;
-        font-weight: 700;
-    }
-
-    .metric-negative {
-        color: #16D98A;
-        font-size: 13px;
-        font-weight: 700;
-    }
-
-    .metric-status {
-        color: #60716C;
-        font-size: 9px;
-        letter-spacing: 2px;
-        margin-top: 12px;
-    }
-
-    /* =========================
-       CONNECTION
-       ========================= */
-
-    .connection-live {
-        background: #04110D;
-        border: 1px solid #123D2E;
-        border-radius: 8px;
-        padding: 13px 16px;
-        margin-bottom: 18px;
-    }
-
-    .connection-wait {
-        background: #080B08;
-        border: 1px solid #263127;
-        border-radius: 8px;
-        padding: 13px 16px;
-        margin-bottom: 18px;
-    }
-
-    .connection-offline {
-        background: #090505;
-        border: 1px solid #291111;
-        border-radius: 8px;
-        padding: 13px 16px;
-        margin-bottom: 18px;
-    }
-
-    .live-dot {
-        color: #16D98A;
-        font-weight: 700;
-    }
-
-    .wait-dot {
-        color: #A4B09F;
-        font-weight: 700;
-    }
-
-    .offline-dot {
-        color: #16D98A;
-        font-weight: 700;
-    }
-
-    /* =========================
-       NEWS
-       ========================= */
-
-    .news-card {
-        background: #030706;
-        border: 1px solid #10231F;
-        border-radius: 8px;
-        padding: 17px 19px;
-        margin-bottom: 9px;
-        transition: 0.2s;
-    }
-
-    .news-card:hover {
-        border-color: #16D98A;
-        background: #05100C;
-    }
-
-    .news-headline {
-        color: #E3ECE9;
-        font-size: 14px;
-        line-height: 1.45;
-        font-weight: 500;
-    }
-
-    .news-source {
-        color: #52635E;
-        font-size: 9px;
-        letter-spacing: 2px;
-        margin-top: 9px;
-    }
-
-    /* =========================
-       ACCOUNT
-       ========================= */
-
-    .account-box {
-        background: #050908;
-        border: 1px solid #122B25;
-        border-radius: 8px;
-        padding: 12px 14px;
-        margin: 12px 0 16px;
-    }
-
-    .account-label {
-        color: #53635F;
-        font-size: 8px;
-        letter-spacing: 2px;
-    }
-
-    .account-name {
-        color: #E5ECEA;
-        font-size: 14px;
-        font-weight: 600;
-    }
-
-    /* =========================
-       AI CHAT
-       ========================= */
-
-    .ai-header {
-        background:
-            linear-gradient(
-                90deg,
-                #06100D,
-                #030706
-            );
-        border: 1px solid #123128;
-        border-radius: 10px;
-        padding: 18px 20px;
-        margin-bottom: 15px;
-    }
-
-    .ai-name {
-        color: #EAF1EF;
-        font-size: 17px;
-        letter-spacing: 3px;
-        font-weight: 600;
-    }
-
-    .ai-status {
-        color: #16D98A;
-        font-size: 9px;
-        letter-spacing: 2px;
-        margin-top: 4px;
-    }
-
-    /* =========================
-       PORTFOLIO
-       ========================= */
-
-    .portfolio-card {
-        background: #030706;
-        border: 1px solid #112A24;
-        border-radius: 9px;
-        padding: 19px;
-        margin-bottom: 10px;
-    }
-
-    .portfolio-symbol {
-        color: #F0F5F3;
-        font-size: 18px;
-        font-weight: 600;
-        letter-spacing: 2px;
-    }
-
-    .portfolio-data {
-        color: #687873;
-        font-size: 10px;
-        letter-spacing: 1px;
-    }
-
-    .portfolio-value {
-        color: #E6EEEB;
-        font-size: 17px;
-        font-weight: 500;
-    }
-
-    /* =========================
-       NOTES
-       ========================= */
-
-    .note-card {
-        background: #030706;
-        border: 1px solid #112A24;
-        border-radius: 9px;
-        padding: 18px;
-        margin-bottom: 10px;
-    }
-
-    .note-title {
-        color: #E5ECEA;
         font-size: 16px;
         font-weight: 600;
     }
 
-    .note-date {
-        color: #53635E;
-        font-size: 9px;
+    .negative {
+        color: #FF5964;
+        font-size: 16px;
+        font-weight: 600;
+    }
+
+    .live-label {
+        color: #16D98A;
+        font-size: 10px;
+        letter-spacing: 2px;
+        font-weight: 600;
+    }
+
+    .rest-label {
+        color: #7D918D;
+        font-size: 10px;
         letter-spacing: 2px;
     }
 
-    .note-content {
-        color: #B9C4C0;
-        font-size: 13px;
-        line-height: 1.6;
-        margin-top: 12px;
+    .offline-label {
+        color: #FF5964;
+        font-size: 10px;
+        letter-spacing: 2px;
     }
 
-    /* =========================
-       STREAMLIT CONTROLS
-       ========================= */
 
-    .stButton button {
-        background: #050908 !important;
-        color: #DDE7E4 !important;
-        border: 1px solid #17332C !important;
-        border-radius: 7px !important;
-        min-height: 40px;
+    /* ==============================
+       SECTION TITLES
+       ============================== */
+
+    .section-title {
+        color: #EAF5F2;
+        font-size: 18px;
         font-weight: 600;
-        letter-spacing: 1px;
+        letter-spacing: 2px;
+        margin-top: 10px;
+        margin-bottom: 16px;
     }
 
-    .stButton button:hover {
-        color: #16D98A !important;
-        border-color: #16D98A !important;
-        background: #06100C !important;
+    .section-label {
+        color: #657A76;
+        font-size: 10px;
+        letter-spacing: 3px;
+        text-transform: uppercase;
     }
+
+
+    /* ==============================
+       NEWS
+       ============================== */
+
+    .news-card {
+        background: #040907;
+        border: 1px solid #132B26;
+        border-radius: 12px;
+        padding: 18px 20px;
+        margin-bottom: 10px;
+    }
+
+    .news-title {
+        color: #E6EFED;
+        font-size: 15px;
+        font-weight: 500;
+        line-height: 1.45;
+    }
+
+    .news-source {
+        color: #627772;
+        font-size: 10px;
+        letter-spacing: 2px;
+        margin-top: 8px;
+    }
+
+
+    /* ==============================
+       AI
+       ============================== */
+
+    .ai-header {
+        background:
+            linear-gradient(
+                135deg,
+                #06130F,
+                #020505
+            );
+        border: 1px solid #1B493D;
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 15px;
+    }
+
+    .ai-title {
+        color: #16D98A;
+        font-size: 17px;
+        font-weight: 600;
+        letter-spacing: 3px;
+    }
+
+    .ai-subtitle {
+        color: #71847F;
+        font-size: 11px;
+        margin-top: 5px;
+    }
+
+
+    /* ==============================
+       PORTFOLIO
+       ============================== */
+
+    .portfolio-card {
+        background:
+            linear-gradient(
+                145deg,
+                #07100E,
+                #030605
+            );
+        border: 1px solid #17342E;
+        border-radius: 13px;
+        padding: 20px;
+        margin-bottom: 12px;
+    }
+
+    .portfolio-symbol {
+        color: #16D98A;
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: 2px;
+    }
+
+    .portfolio-value {
+        color: #F0F6F4;
+        font-size: 25px;
+        font-weight: 600;
+    }
+
+
+    /* ==============================
+       NOTES
+       ============================== */
+
+    .note-card {
+        background: #040807;
+        border: 1px solid #18322C;
+        border-radius: 12px;
+        padding: 18px;
+        margin-bottom: 12px;
+    }
+
+    .note-title {
+        color: #EAF2F0;
+        font-size: 17px;
+        font-weight: 600;
+    }
+
+    .note-date {
+        color: #647A74;
+        font-size: 10px;
+        letter-spacing: 2px;
+    }
+
+
+    /* ==============================
+       INPUTS
+       ============================== */
 
     .stTextInput input,
     .stTextArea textarea,
     .stNumberInput input {
         background: #030706 !important;
         color: #E8EEEE !important;
-        border: 1px solid #17332C !important;
-        border-radius: 7px !important;
+        border: 1px solid #17342E !important;
+        border-radius: 8px !important;
     }
 
-    .stSelectbox div[data-baseweb="select"] > div {
+    .stSelectbox div[data-baseweb="select"] {
         background: #030706 !important;
-        border-color: #17332C !important;
     }
 
-    .stDateInput input {
-        background: #030706 !important;
-        color: #E8EEEE !important;
-        border-color: #17332C !important;
+
+    /* ==============================
+       BUTTONS
+       ============================== */
+
+    .stButton button {
+        background: #06100D !important;
+        color: #DDE9E6 !important;
+        border: 1px solid #1A4036 !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
     }
 
-    div[data-testid="stMetric"] {
-        background: #030706;
-        border: 1px solid #112A24;
-        border-radius: 8px;
+    .stButton button:hover {
+        color: #16D98A !important;
+        border-color: #16D98A !important;
+        background: #071712 !important;
+    }
+
+
+    /* ==============================
+       METRICS
+       ============================== */
+
+    [data-testid="stMetric"] {
+        background: #040907;
+        border: 1px solid #17342E;
+        border-radius: 12px;
         padding: 15px;
     }
 
-    div[data-testid="stMetricLabel"] {
-        color: #65756F !important;
+    [data-testid="stMetricValue"] {
+        color: #EAF5F2;
     }
 
-    div[data-testid="stMetricValue"] {
-        color: #E8EEEE !important;
+    [data-testid="stMetricLabel"] {
+        color: #71847F;
     }
 
-    hr {
-        border-color: #10231F !important;
-    }
 
-    /* =========================
+    /* ==============================
        CHAT
-       ========================= */
+       ============================== */
 
     [data-testid="stChatMessage"] {
         background: #030706;
-        border: 1px solid #10231F;
-        border-radius: 9px;
-        margin-bottom: 8px;
-    }
-
-    /* =========================
-       LOGIN
-       ========================= */
-
-    .login-container {
-        max-width: 480px;
-        margin: 100px auto;
-    }
-
-    .login-card {
-        background:
-            linear-gradient(
-                145deg,
-                #07100E,
-                #020504
-            );
-        border: 1px solid #16342C;
+        border: 1px solid #142B26;
         border-radius: 12px;
-        padding: 42px;
-        box-shadow:
-            0 20px 70px rgba(0,0,0,0.55);
-    }
-
-    .login-logo {
-        text-align: center;
-        font-size: 48px;
-        letter-spacing: 13px;
-        color: #EAF1EF;
-    }
-
-    .login-sub {
-        text-align: center;
-        color: #16D98A;
-        font-size: 9px;
-        letter-spacing: 4px;
-        margin-bottom: 35px;
+        margin-bottom: 10px;
     }
 
     </style>
@@ -526,29 +410,42 @@ st.markdown(
 
 
 # =========================================================
-# SECURITY / USERS
+# JSON / USERS
 # =========================================================
 
 def load_json(filename, default):
+
     if not os.path.exists(filename):
         return default
 
     try:
-        with open(filename, "r", encoding="utf-8") as f:
+        with open(
+            filename,
+            "r",
+            encoding="utf-8"
+        ) as f:
             return json.load(f)
+
     except Exception:
         return default
 
 
 def save_json(filename, data):
+
     directory = os.path.dirname(filename)
 
-    os.makedirs(
-        directory if directory else ".",
-        exist_ok=True
-    )
+    if directory:
+        os.makedirs(
+            directory,
+            exist_ok=True
+        )
 
-    with open(filename, "w", encoding="utf-8") as f:
+    with open(
+        filename,
+        "w",
+        encoding="utf-8"
+    ) as f:
+
         json.dump(
             data,
             f,
@@ -558,10 +455,12 @@ def save_json(filename, data):
 
 
 def normalize_username(username):
+
     return username.strip().lower()
 
 
 def valid_username(username):
+
     return bool(
         re.fullmatch(
             r"[a-zA-Z0-9_-]{3,24}",
@@ -571,6 +470,7 @@ def valid_username(username):
 
 
 def user_file(username, kind):
+
     safe = hashlib.sha256(
         normalize_username(username).encode()
     ).hexdigest()[:24]
@@ -582,6 +482,7 @@ def user_file(username, kind):
 
 
 def hash_password(password, salt=None):
+
     if salt is None:
         salt = secrets.token_hex(16)
 
@@ -595,7 +496,12 @@ def hash_password(password, salt=None):
     return salt, password_hash
 
 
-def check_password(password, salt, stored_hash):
+def check_password(
+    password,
+    salt,
+    stored_hash
+):
+
     _, calculated = hash_password(
         password,
         salt
@@ -607,8 +513,14 @@ def check_password(password, salt, stored_hash):
     )
 
 
-def create_account(username, password):
-    username = normalize_username(username)
+def create_account(
+    username,
+    password
+):
+
+    username = normalize_username(
+        username
+    )
 
     users = load_json(
         USERS_FILE,
@@ -620,15 +532,15 @@ def create_account(username, password):
 
     if not valid_username(username):
         return False, (
-            "El usuario debe tener entre 3 y 24 "
-            "caracteres y solo usar letras, números, "
-            "_ o -."
+            "El usuario debe tener entre "
+            "3 y 24 caracteres y solo usar "
+            "letras, números, _ o -."
         )
 
     if len(password) < 6:
         return False, (
-            "La contraseña debe tener al menos "
-            "6 caracteres."
+            "La contraseña debe tener al "
+            "menos 6 caracteres."
         )
 
     salt, password_hash = hash_password(
@@ -664,8 +576,14 @@ def create_account(username, password):
     return True, "Cuenta creada."
 
 
-def login(username, password):
-    username = normalize_username(username)
+def login(
+    username,
+    password
+):
+
+    username = normalize_username(
+        username
+    )
 
     users = load_json(
         USERS_FILE,
@@ -696,109 +614,132 @@ if "username" not in st.session_state:
 
 
 # =========================================================
-# LOGIN SCREEN
+# LOGIN
 # =========================================================
 
 def login_screen():
 
     st.markdown(
-        """
-        <div class="login-container">
-            <div class="login-card">
-                <div class="login-logo">COBAR</div>
-                <div class="login-sub">
-                    PERSONAL FINANCIAL INTELLIGENCE
-                </div>
-            </div>
-        </div>
-        """,
+        "<div style='height:80px'></div>",
         unsafe_allow_html=True
     )
 
-    mode = st.radio(
-        "ACCESS",
-        ["Log in", "Create account"],
-        horizontal=True
+    col1, col2, col3 = st.columns(
+        [1, 2, 1]
     )
 
-    username = st.text_input(
-        "Username",
-        placeholder="ej. Lorenzo"
-    )
+    with col2:
 
-    password = st.text_input(
-        "Password",
-        type="password"
-    )
+        st.markdown(
+            """
+            <div class="cobar-panel"
+                 style="text-align:center; padding:40px;">
+                <div class="cobar-logo">
+                    COBAR
+                </div>
 
-    if mode == "Create account":
+                <div class="cobar-subtitle">
+                    PERSONAL FINANCIAL INTELLIGENCE
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
-        confirm = st.text_input(
-            "Confirm password",
+        mode = st.radio(
+            "ACCESS",
+            [
+                "Log in",
+                "Create account"
+            ],
+            horizontal=True
+        )
+
+        username = st.text_input(
+            "Username",
+            placeholder="ej. Lorenzo"
+        )
+
+        password = st.text_input(
+            "Password",
             type="password"
         )
 
-        if st.button(
-            "CREATE ACCOUNT",
-            use_container_width=True
-        ):
+        if mode == "Create account":
 
-            if password != confirm:
+            confirm = st.text_input(
+                "Confirm password",
+                type="password"
+            )
 
-                st.error(
-                    "Las contraseñas no coinciden."
-                )
-
-            else:
-
-                success, message = create_account(
-                    username,
-                    password
-                )
-
-                if success:
-                    st.success(
-                        "Cuenta creada. Ahora puedes iniciar sesión."
-                    )
-                else:
-                    st.error(message)
-
-    else:
-
-        if st.button(
-            "LOG IN",
-            use_container_width=True
-        ):
-
-            if login(
-                username,
-                password
+            if st.button(
+                "CREATE ACCOUNT",
+                use_container_width=True
             ):
 
-                st.session_state.authenticated = True
-                st.session_state.username = (
-                    normalize_username(username)
-                )
+                if password != confirm:
 
-                st.rerun()
+                    st.error(
+                        "Las contraseñas no coinciden."
+                    )
 
-            else:
+                else:
 
-                st.error(
-                    "Usuario o contraseña incorrectos."
-                )
+                    success, message = create_account(
+                        username,
+                        password
+                    )
+
+                    if success:
+
+                        st.success(
+                            "Cuenta creada. "
+                            "Ahora puedes iniciar sesión."
+                        )
+
+                    else:
+
+                        st.error(message)
+
+        else:
+
+            if st.button(
+                "LOG IN",
+                use_container_width=True
+            ):
+
+                if login(
+                    username,
+                    password
+                ):
+
+                    st.session_state.authenticated = True
+                    st.session_state.username = (
+                        normalize_username(username)
+                    )
+
+                    st.rerun()
+
+                else:
+
+                    st.error(
+                        "Usuario o contraseña incorrectos."
+                    )
 
 
 if not st.session_state.authenticated:
+
     login_screen()
     st.stop()
 
 
 # =========================================================
-# CURRENT USER DATA
+# CURRENT USER
 # =========================================================
 
-CURRENT_USER = st.session_state.username
+CURRENT_USER = (
+    st.session_state.username
+)
 
 PORTFOLIO_FILE = user_file(
     CURRENT_USER,
@@ -817,6 +758,7 @@ CHAT_FILE = user_file(
 
 
 if "portfolio" not in st.session_state:
+
     st.session_state.portfolio = load_json(
         PORTFOLIO_FILE,
         []
@@ -824,6 +766,7 @@ if "portfolio" not in st.session_state:
 
 
 if "notes" not in st.session_state:
+
     st.session_state.notes = load_json(
         NOTES_FILE,
         []
@@ -831,6 +774,7 @@ if "notes" not in st.session_state:
 
 
 if "chat" not in st.session_state:
+
     st.session_state.chat = load_json(
         CHAT_FILE,
         []
@@ -848,17 +792,22 @@ def create_finnhub(key):
         return None
 
     try:
+
         return finnhub.Client(
             api_key=key
         )
+
     except Exception:
+
         return None
 
 
-fh = create_finnhub(FINNHUB_KEY)
+fh = create_finnhub(
+    FINNHUB_KEY
+)
 
 
-@st.cache_data(ttl=5)
+@st.cache_data(ttl=10)
 def get_quotes(symbols):
 
     if fh is None:
@@ -869,10 +818,13 @@ def get_quotes(symbols):
     for symbol in symbols:
 
         try:
+
             result[symbol] = fh.quote(
                 symbol
             )
+
         except Exception:
+
             result[symbol] = {}
 
     return result
@@ -899,21 +851,24 @@ def get_chart(symbol):
         if data.get("s") != "ok":
             return None
 
-        df = pd.DataFrame({
-            "Time": pd.to_datetime(
-                data["t"],
-                unit="s"
-            ),
-            "Price": data["c"]
-        })
+        df = pd.DataFrame(
+            {
+                "Time": pd.to_datetime(
+                    data["t"],
+                    unit="s"
+                ),
+                "Price": data["c"]
+            }
+        )
 
         return df.set_index("Time")
 
     except Exception:
+
         return None
 
 
-@st.cache_data(ttl=60)
+@st.cache_data(ttl=120)
 def get_news(symbol):
 
     if fh is None:
@@ -925,24 +880,28 @@ def get_news(symbol):
             "%Y-%m-%d"
         )
 
-        return fh.company_news(
+        news = fh.company_news(
             symbol,
             _from=today,
             to=today
-        )[:10]
+        )
+
+        return news[:10]
 
     except Exception:
+
         return []
 
 
 # =========================================================
-# WEBSOCKET
+# LIVE FINNHUB WEBSOCKET
 # =========================================================
 
 @st.cache_resource
 def create_stream(key):
 
     prices = {}
+
     lock = threading.Lock()
 
     state = {
@@ -958,18 +917,31 @@ def create_stream(key):
 
         for symbol in WATCHLIST:
 
-            ws.send(
-                json.dumps({
-                    "type": "subscribe",
-                    "symbol": symbol
-                })
-            )
+            try:
 
-    def on_message(ws, message):
+                ws.send(
+                    json.dumps(
+                        {
+                            "type": "subscribe",
+                            "symbol": symbol
+                        }
+                    )
+                )
+
+            except Exception:
+                pass
+
+
+    def on_message(
+        ws,
+        message
+    ):
 
         try:
 
-            data = json.loads(message)
+            data = json.loads(
+                message
+            )
 
             if data.get("type") != "trade":
                 return
@@ -985,27 +957,44 @@ def create_stream(key):
                     price = trade.get("p")
                     timestamp = trade.get("t")
 
-                    if symbol and price:
+                    if (
+                        symbol
+                        and price is not None
+                    ):
 
                         prices[symbol] = {
                             "price": float(price),
-                            "timestamp": int(timestamp)
+                            "timestamp": int(
+                                timestamp
+                            )
                         }
 
-                        state["last_message"] = time.time()
+                        state["last_message"] = (
+                            time.time()
+                        )
 
         except Exception as e:
 
             state["error"] = str(e)
 
-    def on_error(ws, error):
+
+    def on_error(
+        ws,
+        error
+    ):
 
         state["connected"] = False
         state["error"] = str(error)
 
-    def on_close(ws, code, msg):
+
+    def on_close(
+        ws,
+        code,
+        msg
+    ):
 
         state["connected"] = False
+
 
     def run():
 
@@ -1014,7 +1003,8 @@ def create_stream(key):
             try:
 
                 ws = websocket.WebSocketApp(
-                    f"wss://ws.finnhub.io?token={key}",
+                    "wss://ws.finnhub.io"
+                    f"?token={key}",
                     on_open=on_open,
                     on_message=on_message,
                     on_error=on_error,
@@ -1037,6 +1027,7 @@ def create_stream(key):
 
             time.sleep(5)
 
+
     if key:
 
         thread = threading.Thread(
@@ -1057,7 +1048,10 @@ prices, price_lock, stream_state = create_stream(
 def get_live_price(symbol):
 
     with price_lock:
-        return prices.get(symbol)
+
+        return prices.get(
+            symbol
+        )
 
 
 # =========================================================
@@ -1071,10 +1065,13 @@ def create_openai(key):
         return None
 
     try:
+
         return OpenAI(
             api_key=key
         )
+
     except Exception:
+
         return None
 
 
@@ -1096,7 +1093,8 @@ def ask_cobar(
         )
 
     instructions = """
-You are COBAR, a private personal intelligence assistant.
+You are COBAR, a private personal financial
+intelligence assistant.
 
 Speak Spanish unless another language is requested.
 
@@ -1116,7 +1114,7 @@ Clearly distinguish current data from hypothetical analysis.
     try:
 
         response = ai.responses.create(
-            model="gpt-5",
+            model="gpt-4.1",
             instructions=instructions,
             input=(
                 "CURRENT MARKET DATA:\n"
@@ -1140,14 +1138,15 @@ Clearly distinguish current data from hypothetical analysis.
 with st.sidebar:
 
     st.markdown(
-        '<div class="cobar-logo">COBAR</div>',
-        unsafe_allow_html=True
-    )
+        """
+        <div class="cobar-logo">
+            COBAR
+        </div>
 
-    st.markdown(
-        '<div class="cobar-subtitle">'
-        'PERSONAL FINANCIAL INTELLIGENCE'
-        '</div>',
+        <div class="cobar-subtitle">
+            PERSONAL FINANCIAL INTELLIGENCE
+        </div>
+        """,
         unsafe_allow_html=True
     )
 
@@ -1155,13 +1154,20 @@ with st.sidebar:
 
     st.markdown(
         f"""
-        <div class="account-box">
-            <div class="account-label">
+        <div class="cobar-panel">
+
+            <div class="section-label">
                 LOGGED IN AS
             </div>
-            <div class="account-name">
+
+            <div style="
+                font-size:17px;
+                margin-top:6px;
+                color:#EAF5F2;
+            ">
                 {CURRENT_USER}
             </div>
+
         </div>
         """,
         unsafe_allow_html=True
@@ -1185,32 +1191,44 @@ with st.sidebar:
     if FINNHUB_KEY:
 
         st.markdown(
-            '<span class="live-dot">● FINNHUB API</span>',
+            """
+            <div class="live-label">
+                ● FINNHUB API
+            </div>
+            """,
             unsafe_allow_html=True
         )
 
     else:
 
         st.markdown(
-            '<span class="offline-dot">'
-            '● FINNHUB KEY MISSING'
-            '</span>',
+            """
+            <div class="offline-label">
+                ● FINNHUB KEY MISSING
+            </div>
+            """,
             unsafe_allow_html=True
         )
 
     if OPENAI_KEY:
 
         st.markdown(
-            '<span class="live-dot">● COBAR AI</span>',
+            """
+            <div class="live-label">
+                ● COBAR AI
+            </div>
+            """,
             unsafe_allow_html=True
         )
 
     else:
 
         st.markdown(
-            '<span class="offline-dot">'
-            '● OPENAI KEY MISSING'
-            '</span>',
+            """
+            <div class="offline-label">
+                ● OPENAI KEY MISSING
+            </div>
+            """,
             unsafe_allow_html=True
         )
 
@@ -1229,6 +1247,7 @@ with st.sidebar:
             "notes",
             "chat"
         ]:
+
             st.session_state.pop(
                 key,
                 None
@@ -1238,94 +1257,16 @@ with st.sidebar:
 
 
 # =========================================================
-# CONNECTION STATUS
+# MARKET CARDS
 # =========================================================
 
-def render_connection():
+def render_market_card(
+    symbol
+):
 
-    connected = stream_state["connected"]
-    last_message = stream_state["last_message"]
-
-    if connected and last_message:
-
-        age = time.time() - last_message
-
-        if age < 15:
-
-            st.markdown(
-                """
-                <div class="connection-live">
-                    <span class="live-dot">
-                        ● LIVE MARKET STREAM
-                    </span>
-                    &nbsp;&nbsp;
-                    <span class="muted">
-                        Finnhub WebSocket
-                    </span>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-
-        else:
-
-            st.markdown(
-                """
-                <div class="connection-wait">
-                    <span class="wait-dot">
-                        ● CONNECTED / WAITING
-                    </span>
-                    &nbsp;&nbsp;
-                    <span class="muted">
-                        Waiting for market ticks
-                    </span>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-
-    elif connected:
-
-        st.markdown(
-            """
-            <div class="connection-wait">
-                <span class="wait-dot">
-                    ● CONNECTED / WAITING
-                </span>
-                &nbsp;&nbsp;
-                <span class="muted">
-                    Waiting for market ticks
-                </span>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-    else:
-
-        st.markdown(
-            """
-            <div class="connection-offline">
-                <span class="offline-dot">
-                    ● STREAM OFFLINE
-                </span>
-                &nbsp;&nbsp;
-                <span class="muted">
-                    REST market data may still be available
-                </span>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-
-# =========================================================
-# STOCK CARD
-# =========================================================
-
-def render_stock_card(symbol):
-
-    live = get_live_price(symbol)
+    live = get_live_price(
+        symbol
+    )
 
     quote = get_quotes(
         [symbol]
@@ -1338,98 +1279,128 @@ def render_stock_card(symbol):
 
         price = live["price"]
 
-        previous = quote.get("pc")
+        previous = quote.get(
+            "pc"
+        )
 
         if previous:
+
             pct = (
                 (price - previous)
                 / previous
                 * 100
             )
+
         else:
-            pct = 0
+
+            pct = quote.get(
+                "dp",
+                0
+            )
+
+        if pct >= 0:
+
+            movement_class = "positive"
+
+        else:
+
+            movement_class = "negative"
 
         timestamp = datetime.fromtimestamp(
             live["timestamp"] / 1000
-        ).strftime("%H:%M:%S")
-
-        st.markdown(
-            f"""
-            <div class="metric-panel">
-
-                <div class="metric-symbol">
-                    {symbol}
-                </div>
-
-                <div class="metric-price">
-                    ${price:,.2f}
-                </div>
-
-                <div class="metric-positive">
-                    {pct:+.2f}%
-                </div>
-
-                <div class="metric-status">
-                    ● LIVE · {timestamp}
-                </div>
-
-            </div>
-            """,
-            unsafe_allow_html=True
+        ).strftime(
+            "%H:%M:%S"
         )
+
+        html = f"""
+        <div class="market-card">
+
+            <div class="ticker">
+                {symbol}
+            </div>
+
+            <div class="stock-price">
+                ${price:,.2f}
+            </div>
+
+            <div class="{movement_class}">
+                {pct:+.2f}%
+            </div>
+
+            <div style="height:20px"></div>
+
+            <div class="live-label">
+                ● LIVE · {timestamp}
+            </div>
+
+        </div>
+        """
 
     elif quote.get("c"):
 
         price = quote["c"]
-        pct = quote.get("dp", 0)
 
-        st.markdown(
-            f"""
-            <div class="metric-panel">
-
-                <div class="metric-symbol">
-                    {symbol}
-                </div>
-
-                <div class="metric-price">
-                    ${price:,.2f}
-                </div>
-
-                <div class="metric-positive">
-                    {pct:+.2f}%
-                </div>
-
-                <div class="metric-status">
-                    REST MARKET DATA
-                </div>
-
-            </div>
-            """,
-            unsafe_allow_html=True
+        pct = quote.get(
+            "dp",
+            0
         )
+
+        if pct >= 0:
+
+            movement_class = "positive"
+
+        else:
+
+            movement_class = "negative"
+
+        html = f"""
+        <div class="market-card">
+
+            <div class="ticker">
+                {symbol}
+            </div>
+
+            <div class="stock-price">
+                ${price:,.2f}
+            </div>
+
+            <div class="{movement_class}">
+                {pct:+.2f}%
+            </div>
+
+            <div style="height:20px"></div>
+
+            <div class="rest-label">
+                ● REST MARKET DATA
+            </div>
+
+        </div>
+        """
 
     else:
 
-        st.markdown(
-            f"""
-            <div class="metric-panel">
+        html = f"""
+        <div class="market-card">
 
-                <div class="metric-symbol">
-                    {symbol}
-                </div>
-
-                <div class="metric-price">
-                    N/D
-                </div>
-
-                <div class="metric-status">
-                    DATA UNAVAILABLE
-                </div>
-
+            <div class="ticker">
+                {symbol}
             </div>
-            """,
-            unsafe_allow_html=True
-        )
+
+            <div class="stock-price">
+                N/D
+            </div>
+
+            <div class="offline-label">
+                DATA UNAVAILABLE
+            </div>
+
+        </div>
+        """
+
+    st.markdown(
+        html,
+        unsafe_allow_html=True
+    )
 
 
 # =========================================================
@@ -1438,12 +1409,69 @@ def render_stock_card(symbol):
 
 def market_dashboard():
 
-    render_connection()
+    connected = stream_state["connected"]
+    last_message = stream_state["last_message"]
 
-    cols = st.columns(4)
+    if connected and last_message:
+
+        age = time.time() - last_message
+
+        if age < 15:
+
+            connection_text = (
+                "● LIVE MARKET STREAM"
+            )
+
+            connection_class = "live-label"
+
+        else:
+
+            connection_text = (
+                "● CONNECTED / WAITING"
+            )
+
+            connection_class = "rest-label"
+
+    elif connected:
+
+        connection_text = (
+            "● CONNECTED / WAITING FOR TICKS"
+        )
+
+        connection_class = "rest-label"
+
+    else:
+
+        connection_text = (
+            "● STREAM OFFLINE · REST DATA ACTIVE"
+        )
+
+        connection_class = "offline-label"
+
+
+    st.markdown(
+        f"""
+        <div class="cobar-panel">
+
+            <div class="section-label">
+                MARKET CONNECTION
+            </div>
+
+            <div class="{connection_class}"
+                 style="font-size:13px; margin-top:8px;">
+                {connection_text}
+            </div>
+
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+
+    row1 = st.columns(4)
 
     for col, symbol in zip(
-        cols,
+        row1,
         [
             "NVDA",
             "TSLA",
@@ -1453,14 +1481,46 @@ def market_dashboard():
     ):
 
         with col:
-            render_stock_card(symbol)
+
+            render_market_card(
+                symbol
+            )
+
 
     st.markdown(
-        '<div class="section-title">'
-        'LIVE MARKET CHART'
-        '</div>',
+        "<div style='height:8px'></div>",
         unsafe_allow_html=True
     )
+
+
+    row2 = st.columns(4)
+
+    for col, symbol in zip(
+        row2,
+        [
+            "AMZN",
+            "META",
+            "AMD",
+            "GOOGL"
+        ]
+    ):
+
+        with col:
+
+            render_market_card(
+                symbol
+            )
+
+
+    st.markdown(
+        """
+        <div class="section-title">
+            PRICE CHART
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
 
     selected = st.selectbox(
         "SYMBOL",
@@ -1468,13 +1528,9 @@ def market_dashboard():
         key="dashboard_symbol"
     )
 
-    live = get_live_price(selected)
 
-    quote = get_quotes(
-        [selected]
-    ).get(
-        selected,
-        {}
+    live = get_live_price(
+        selected
     )
 
     if live:
@@ -1484,14 +1540,15 @@ def market_dashboard():
             f"${live['price']:,.2f}"
         )
 
-    elif quote.get("c"):
-
-        st.metric(
-            "PRICE",
-            f"${quote['c']:,.2f}"
+        st.caption(
+            "● LIVE STREAM"
         )
 
-    chart = get_chart(selected)
+
+    chart = get_chart(
+        selected
+    )
+
 
     if chart is not None:
 
@@ -1514,14 +1571,15 @@ def market_dashboard():
 if page == "Command Center":
 
     st.markdown(
-        '<div class="terminal-title">COBAR</div>',
-        unsafe_allow_html=True
-    )
+        """
+        <div class="cobar-logo">
+            COBAR
+        </div>
 
-    st.markdown(
-        '<div class="terminal-subtitle">'
-        'PERSONAL FINANCIAL INTELLIGENCE'
-        '</div>',
+        <div class="cobar-subtitle">
+            PERSONAL FINANCIAL INTELLIGENCE
+        </div>
+        """,
         unsafe_allow_html=True
     )
 
@@ -1530,19 +1588,23 @@ if page == "Command Center":
     st.divider()
 
     st.markdown(
-        '<div class="section-title">'
-        'MARKET NEWS'
-        '</div>',
+        """
+        <div class="section-title">
+            📡 MARKET INTELLIGENCE
+        </div>
+        """,
         unsafe_allow_html=True
     )
 
     news_symbol = st.selectbox(
-        "COMPANY",
+        "Company",
         WATCHLIST,
         key="command_news"
     )
 
-    news = get_news(news_symbol)
+    news = get_news(
+        news_symbol
+    )
 
     if news:
 
@@ -1555,14 +1617,14 @@ if page == "Command Center":
 
             source = item.get(
                 "source",
-                ""
+                "Unknown"
             )
 
             st.markdown(
                 f"""
                 <div class="news-card">
 
-                    <div class="news-headline">
+                    <div class="news-title">
                         {headline}
                     </div>
 
@@ -1581,21 +1643,27 @@ if page == "Command Center":
             "No hay noticias disponibles."
         )
 
+
     st.divider()
+
 
     st.markdown(
         """
         <div class="ai-header">
-            <div class="ai-name">
+
+            <div class="ai-title">
                 ◈ COBAR AI
             </div>
-            <div class="ai-status">
-                PERSONAL INTELLIGENCE SYSTEM
+
+            <div class="ai-subtitle">
+                PERSONAL FINANCIAL INTELLIGENCE
             </div>
+
         </div>
         """,
         unsafe_allow_html=True
     )
+
 
     for message in st.session_state.chat:
 
@@ -1607,22 +1675,29 @@ if page == "Command Center":
                 message["content"]
             )
 
+
     prompt = st.chat_input(
-        "Habla con COBAR..."
+        "Ask COBAR about a company, market or idea..."
     )
+
 
     if prompt:
 
-        st.session_state.chat.append({
-            "role": "user",
-            "content": prompt
-        })
+        st.session_state.chat.append(
+            {
+                "role": "user",
+                "content": prompt
+            }
+        )
+
 
         context = ""
 
         for symbol in WATCHLIST:
 
-            live = get_live_price(symbol)
+            live = get_live_price(
+                symbol
+            )
 
             quote = get_quotes(
                 [symbol]
@@ -1645,20 +1720,26 @@ if page == "Command Center":
                     f"${quote['c']:.2f}\n"
                 )
 
+
         answer = ask_cobar(
             prompt,
             context
         )
 
-        st.session_state.chat.append({
-            "role": "assistant",
-            "content": answer
-        })
+
+        st.session_state.chat.append(
+            {
+                "role": "assistant",
+                "content": answer
+            }
+        )
+
 
         save_json(
             CHAT_FILE,
             st.session_state.chat
         )
+
 
         st.rerun()
 
@@ -1670,34 +1751,43 @@ if page == "Command Center":
 elif page == "Market":
 
     st.markdown(
-        '<div class="terminal-title">MARKET</div>',
+        """
+        <div class="cobar-logo">
+            MARKET
+        </div>
+
+        <div class="cobar-subtitle">
+            LIVE MARKET INTELLIGENCE
+        </div>
+        """,
         unsafe_allow_html=True
     )
 
-    st.markdown(
-        '<div class="terminal-subtitle">'
-        'REAL-TIME MARKET INTELLIGENCE'
-        '</div>',
-        unsafe_allow_html=True
-    )
 
     symbol = st.text_input(
-        "TICKER",
+        "Ticker",
         placeholder="NVDA"
     ).upper().strip()
 
+
     if symbol:
 
-        render_stock_card(symbol)
+        render_market_card(
+            symbol
+        )
 
-        chart = get_chart(symbol)
+        chart = get_chart(
+            symbol
+        )
 
         if chart is not None:
 
             st.markdown(
-                '<div class="section-title">'
-                'PRICE HISTORY'
-                '</div>',
+                """
+                <div class="section-title">
+                    PRICE HISTORY
+                </div>
+                """,
                 unsafe_allow_html=True
             )
 
@@ -1714,31 +1804,35 @@ elif page == "Market":
 elif page == "Investment AI":
 
     st.markdown(
-        '<div class="terminal-title">INVESTMENT AI</div>',
+        """
+        <div class="cobar-logo">
+            INVESTMENT AI
+        </div>
+
+        <div class="cobar-subtitle">
+            EDUCATIONAL MARKET ANALYSIS
+        </div>
+        """,
         unsafe_allow_html=True
     )
 
-    st.markdown(
-        '<div class="terminal-subtitle">'
-        'SCENARIO ANALYSIS'
-        '</div>',
-        unsafe_allow_html=True
-    )
 
     st.info(
-        "Herramienta educativa para analizar escenarios. "
-        "No ejecuta operaciones."
+        "Herramienta educativa. COBAR no ejecuta operaciones "
+        "ni se conecta a brokers."
     )
 
+
     capital = st.number_input(
-        "CAPITAL HIPOTÉTICO",
+        "Capital hipotético",
         min_value=0.0,
         value=1000.0,
         step=100.0
     )
 
+
     horizon = st.selectbox(
-        "HORIZONTE",
+        "Horizonte",
         [
             "Corto plazo",
             "Mediano plazo",
@@ -1746,8 +1840,9 @@ elif page == "Investment AI":
         ]
     )
 
+
     objective = st.selectbox(
-        "OBJETIVO",
+        "Objetivo",
         [
             "Aprender",
             "Crecimiento",
@@ -1756,12 +1851,14 @@ elif page == "Investment AI":
         ]
     )
 
+
     details = st.text_area(
-        "¿QUÉ QUIERES ANALIZAR?"
+        "¿Qué quieres analizar?"
     )
 
+
     if st.button(
-        "ANALIZAR ESCENARIO",
+        "ANALIZAR",
         use_container_width=True
     ):
 
@@ -1794,7 +1891,9 @@ No conectes a ningún broker.
 """
 
         st.write(
-            ask_cobar(prompt)
+            ask_cobar(
+                prompt
+            )
         )
 
 
@@ -1805,30 +1904,39 @@ No conectes a ningún broker.
 elif page == "Portfolio":
 
     st.markdown(
-        '<div class="terminal-title">PORTFOLIO</div>',
+        """
+        <div class="cobar-logo">
+            PORTFOLIO
+        </div>
+
+        <div class="cobar-subtitle">
+            PERSONAL INVESTMENT TRACKER
+        </div>
+        """,
         unsafe_allow_html=True
     )
 
-    st.markdown(
-        '<div class="terminal-subtitle">'
-        'PERSONAL HOLDINGS'
-        '</div>',
-        unsafe_allow_html=True
-    )
 
     st.caption(
         f"Portfolio personal de {CURRENT_USER}. "
         "No está conectado a ningún broker."
     )
 
+
+    # -----------------------------------------------------
+    # RESET PORTFOLIO
+    # -----------------------------------------------------
+
     with st.expander(
-        "⚠ PORTFOLIO SETTINGS"
+        "⚙ PORTFOLIO SETTINGS"
     ):
 
         st.warning(
-            "Resetear el portfolio eliminará todas "
-            "las inversiones registradas de esta cuenta."
+            "Resetear el portfolio eliminará "
+            "todas las inversiones registradas "
+            "de esta cuenta."
         )
+
 
         if st.button(
             "RESET PORTFOLIO",
@@ -1844,69 +1952,92 @@ elif page == "Portfolio":
             )
 
             st.success(
-                "Portfolio reseteado."
+                "Portfolio reseteado correctamente."
             )
 
             st.rerun()
 
+
     st.divider()
+
 
     with st.form(
         "trade_form"
     ):
 
         symbol = st.text_input(
-            "TICKER"
+            "Ticker"
         ).upper().strip()
 
+
         shares = st.number_input(
-            "CANTIDAD",
+            "Cantidad",
             min_value=0.0001,
             value=1.0
         )
 
+
         entry = st.number_input(
-            "PRECIO DE ENTRADA",
+            "Precio de entrada",
             min_value=0.01,
             value=100.0
         )
 
+
         date = st.date_input(
-            "FECHA"
+            "Fecha"
         )
+
 
         submitted = st.form_submit_button(
             "GUARDAR INVERSIÓN"
         )
 
+
         if submitted and symbol:
 
-            st.session_state.portfolio.append({
-                "symbol": symbol,
-                "shares": shares,
-                "entry": entry,
-                "date": str(date)
-            })
+            st.session_state.portfolio.append(
+                {
+                    "symbol": symbol,
+                    "shares": shares,
+                    "entry": entry,
+                    "date": str(date)
+                }
+            )
+
 
             save_json(
                 PORTFOLIO_FILE,
                 st.session_state.portfolio
             )
 
+
             st.success(
                 "Inversión registrada."
             )
 
+
     st.divider()
 
-    total_cost = 0
-    total_value = 0
+
+    total_cost = 0.0
+    total_value = 0.0
+
+
+    if not st.session_state.portfolio:
+
+        st.info(
+            "Este portfolio está vacío."
+        )
+
 
     for trade in st.session_state.portfolio:
 
         symbol = trade["symbol"]
 
-        live = get_live_price(symbol)
+        live = get_live_price(
+            symbol
+        )
 
         quote = get_quotes(
             [symbol]
@@ -1915,18 +2046,22 @@ elif page == "Portfolio":
             {}
         )
 
+
         current = (
             live["price"]
             if live
             else quote.get("c")
         )
 
+
         invested = (
             trade["shares"]
             * trade["entry"]
         )
 
+
         total_cost += invested
+
 
         if current:
 
@@ -1937,16 +2072,28 @@ elif page == "Portfolio":
 
             total_value += value
 
+
             pnl = (
                 value
                 - invested
             )
+
 
             pct = (
                 pnl / invested * 100
                 if invested
                 else 0
             )
+
+
+            if pnl >= 0:
+
+                movement_class = "positive"
+
+            else:
+
+                movement_class = "negative"
+
 
             st.markdown(
                 f"""
@@ -1956,45 +2103,34 @@ elif page == "Portfolio":
                         {symbol}
                     </div>
 
-                    <br>
-
-                    <div class="portfolio-data">
-                        ENTRY
-                    </div>
+                    <div style="height:10px"></div>
 
                     <div class="portfolio-value">
+                        ${value:,.2f}
+                    </div>
+
+                    <div style="height:8px"></div>
+
+                    <div>
+                        Entrada:
                         ${trade["entry"]:,.2f}
                     </div>
 
-                    <br>
-
-                    <div class="portfolio-data">
-                        CURRENT
-                    </div>
-
-                    <div class="portfolio-value">
+                    <div>
+                        Actual:
                         ${current:,.2f}
                     </div>
 
-                    <br>
-
-                    <div class="portfolio-data">
-                        SHARES
-                    </div>
-
-                    <div class="portfolio-value">
+                    <div>
+                        Cantidad:
                         {trade["shares"]}
                     </div>
 
-                    <br>
+                    <div style="height:10px"></div>
 
-                    <div class="portfolio-data">
-                        P/L
-                    </div>
-
-                    <div class="metric-positive">
+                    <div class="{movement_class}">
+                        P/L:
                         ${pnl:+,.2f}
-                        &nbsp;&nbsp;
                         ({pct:+.2f}%)
                     </div>
 
@@ -2002,6 +2138,7 @@ elif page == "Portfolio":
                 """,
                 unsafe_allow_html=True
             )
+
 
         else:
 
@@ -2013,26 +2150,27 @@ elif page == "Portfolio":
                         {symbol}
                     </div>
 
-                    <br>
-
-                    <div class="portfolio-data">
-                        ENTRY
-                    </div>
+                    <div style="height:10px"></div>
 
                     <div class="portfolio-value">
+                        DATA UNAVAILABLE
+                    </div>
+
+                    <div>
+                        Entrada:
                         ${trade["entry"]:,.2f}
                     </div>
 
-                    <br>
-
-                    <div class="portfolio-data">
-                        CURRENT PRICE UNAVAILABLE
+                    <div>
+                        Cantidad:
+                        {trade["shares"]}
                     </div>
 
                 </div>
                 """,
                 unsafe_allow_html=True
             )
+
 
     if total_cost:
 
@@ -2043,88 +2181,98 @@ elif page == "Portfolio":
             - total_cost
         )
 
+
         c1, c2, c3 = st.columns(3)
 
+
         c1.metric(
-            "REGISTERED",
+            "REGISTRADO",
             f"${total_cost:,.2f}"
         )
 
+
         c2.metric(
-            "CURRENT VALUE",
+            "VALOR ACTUAL",
             f"${total_value:,.2f}"
         )
+
 
         c3.metric(
             "P/L",
             f"${total_pnl:+,.2f}"
         )
 
-    else:
-
-        st.info(
-            "Este portfolio está vacío."
-        )
-
 
 # =========================================================
-# NOTES
+# MY NOTES
 # =========================================================
 
 elif page == "My Notes":
 
     st.markdown(
-        '<div class="terminal-title">MY NOTES</div>',
+        """
+        <div class="cobar-logo">
+            MY NOTES
+        </div>
+
+        <div class="cobar-subtitle">
+            PRIVATE KNOWLEDGE
+        </div>
+        """,
         unsafe_allow_html=True
     )
 
-    st.markdown(
-        '<div class="terminal-subtitle">'
-        'PRIVATE INTELLIGENCE'
-        '</div>',
-        unsafe_allow_html=True
-    )
 
     st.caption(
         f"Notas personales de {CURRENT_USER}."
     )
+
 
     with st.form(
         "note_form"
     ):
 
         title = st.text_input(
-            "TÍTULO"
+            "Título"
         )
 
+
         content = st.text_area(
-            "NOTA"
+            "Nota"
         )
+
 
         save = st.form_submit_button(
             "GUARDAR NOTA"
         )
 
+
         if save and title and content:
 
-            st.session_state.notes.append({
-                "title": title,
-                "content": content,
-                "date": datetime.now().strftime(
-                    "%d/%m/%Y %H:%M"
-                )
-            })
+            st.session_state.notes.append(
+                {
+                    "title": title,
+                    "content": content,
+                    "date": datetime.now().strftime(
+                        "%d/%m/%Y %H:%M"
+                    )
+                }
+            )
+
 
             save_json(
                 NOTES_FILE,
                 st.session_state.notes
             )
 
+
             st.success(
                 "Nota guardada."
             )
 
+
     st.divider()
+
 
     for i, note in enumerate(
         reversed(
@@ -2144,7 +2292,9 @@ elif page == "My Notes":
                     {note["date"]}
                 </div>
 
-                <div class="note-content">
+                <div style="height:12px"></div>
+
+                <div>
                     {note["content"]}
                 </div>
 
@@ -2152,6 +2302,7 @@ elif page == "My Notes":
             """,
             unsafe_allow_html=True
         )
+
 
         if st.button(
             "ELIMINAR",
@@ -2166,14 +2317,17 @@ elif page == "My Notes":
                 - i
             )
 
+
             st.session_state.notes.pop(
                 index
             )
+
 
             save_json(
                 NOTES_FILE,
                 st.session_state.notes
             )
+
 
             st.rerun()
 
@@ -2185,25 +2339,29 @@ elif page == "My Notes":
 elif page == "Intelligence Feed":
 
     st.markdown(
-        '<div class="terminal-title">'
-        'INTELLIGENCE FEED'
-        '</div>',
+        """
+        <div class="cobar-logo">
+            INTELLIGENCE FEED
+        </div>
+
+        <div class="cobar-subtitle">
+            COMPANY NEWS
+        </div>
+        """,
         unsafe_allow_html=True
     )
 
-    st.markdown(
-        '<div class="terminal-subtitle">'
-        'COMPANY NEWS'
-        '</div>',
-        unsafe_allow_html=True
-    )
 
     symbol = st.selectbox(
-        "COMPANY",
+        "Empresa",
         WATCHLIST
     )
 
-    news = get_news(symbol)
+
+    news = get_news(
+        symbol
+    )
+
 
     if news:
 
@@ -2214,20 +2372,23 @@ elif page == "Intelligence Feed":
                 "Sin título"
             )
 
+
             source = item.get(
                 "source",
-                ""
+                "Unknown"
             )
+
 
             url = item.get(
                 "url"
             )
 
+
             st.markdown(
                 f"""
                 <div class="news-card">
 
-                    <div class="news-headline">
+                    <div class="news-title">
                         {headline}
                     </div>
 
@@ -2240,12 +2401,14 @@ elif page == "Intelligence Feed":
                 unsafe_allow_html=True
             )
 
+
             if url:
 
                 st.link_button(
-                    "ABRIR FUENTE",
+                    "OPEN SOURCE",
                     url
                 )
+
 
     else:
 
@@ -2261,24 +2424,28 @@ elif page == "Intelligence Feed":
 elif page == "Media":
 
     st.markdown(
-        '<div class="terminal-title">MEDIA</div>',
+        """
+        <div class="cobar-logo">
+            MEDIA
+        </div>
+
+        <div class="cobar-subtitle">
+            VIDEO INTELLIGENCE
+        </div>
+        """,
         unsafe_allow_html=True
     )
 
-    st.markdown(
-        '<div class="terminal-subtitle">'
-        'MARKET MEDIA'
-        '</div>',
-        unsafe_allow_html=True
-    )
 
     st.caption(
         "Entrevistas y videos que quieras analizar."
     )
 
+
     url = st.text_input(
-        "YOUTUBE URL"
+        "YouTube URL"
     )
+
 
     if url:
 
@@ -2287,11 +2454,12 @@ elif page == "Media":
             or "youtu.be" in url
         ):
 
-            st.video(url)
+            st.video(
+                url
+            )
 
         else:
 
             st.error(
                 "Introduce una URL de YouTube válida."
             )
-```
