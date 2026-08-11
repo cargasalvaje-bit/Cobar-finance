@@ -1626,7 +1626,4 @@ else:
     elif page == "Media":
         media_page()
 
-    elif page == "About":
-        about_Cobar_page() 
-
 
