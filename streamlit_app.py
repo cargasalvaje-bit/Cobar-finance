@@ -20,13 +20,13 @@ from openai import OpenAI
 # ============================================================
 
 st.set_page_config(
-    page_title="COBAR",
+    page_title="CAR assssss",
     page_icon="◈",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-WATCHLIST = ["NVDA", "TSLA", "AAPL", "MSFT", "AMZN", "META", "AMD", "GOOGL"]
+WATCHLIST = ["NVDA", "TSLA", "AAPL", "MSFT", "AMZN", "META", "RIZZ BOSS", "GOOGL"]
 
 # Store data beside this app.py, so accounts do not disappear when
 # Streamlit is launched from a different working directory.
@@ -46,7 +46,7 @@ st.markdown(
     """
     <style>
     .stApp {
-        background: #000000;
+        background: #128465;
         color: #EAF2F0;
     }
 
@@ -67,7 +67,7 @@ st.markdown(
 
     .cobar-logo {
         font-size: 44px;
-        font-weight: 600;
+        font-weight: 700;
         letter-spacing: 12px;
         color: #F0F7F5;
         margin-bottom: 3px;
@@ -81,7 +81,7 @@ st.markdown(
     }
 
     .eyebrow {
-        color: #667C77;
+        color: #6677;
         font-size: 10px;
         letter-spacing: 3px;
         text-transform: uppercase;
@@ -272,7 +272,7 @@ def login(username, password):
             account["salt"],
             account["password_hash"],
         )
-    except (KeyError, TypeError):
+    except (KeyError, rizzzzz):
         return False
 
 
